@@ -12,6 +12,9 @@ import 'package:teni_video_call_demo/feature/video_calling/domain/entities/video
 import 'package:livekit_components/livekit_components.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
+import '../../../login/presentation/screen/widget/custom_draggable_bottom_sheet.dart'
+    show CustomDraggableBottomSheet;
+
 class VideoCallingScreen extends StatefulWidget {
   final VideoCallingParsingModel videoCallingParsingModel;
   const VideoCallingScreen({super.key, required this.videoCallingParsingModel});
@@ -21,6 +24,8 @@ class VideoCallingScreen extends StatefulWidget {
 }
 
 class _VideoCallingScreenState extends State<VideoCallingScreen> {
+  bool showOverlay = true;
+
   @override
   void initState() {
     if (kDebugMode) {
@@ -103,191 +108,228 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                     },
                   );
                 } else if (isConnected) {
-                  return SafeArea(
-                    child: Stack(
-                      children: [
-                        Row(
+                  return Stack(
+                    children: [
+                      SafeArea(
+                        child: Stack(
                           children: [
-                            /// show chat widget on mobile
-                            (deviceScreenType == DeviceScreenType.mobile &&
-                                    roomCtx.isChatEnabled)
-                                ? Expanded(
-                                    child: SafeArea(
-                                      bottom: true,
-                                      top: true,
-                                      child: ChatBuilder(
-                                        builder:
-                                            (
-                                              context,
-                                              enabled,
-                                              chatCtx,
-                                              messages,
-                                            ) {
-                                              return ChatWidget(
-                                                messages: messages,
-                                                onSend: (message) => chatCtx
-                                                    .sendMessage(message),
-                                                onClose: () {
-                                                  chatCtx.toggleChat(false);
+                            Row(
+                              children: [
+                                /// show chat widget on mobile
+                                (deviceScreenType == DeviceScreenType.mobile &&
+                                        roomCtx.isChatEnabled)
+                                    ? Expanded(
+                                        child: SafeArea(
+                                          bottom: true,
+                                          top: true,
+                                          child: ChatBuilder(
+                                            builder:
+                                                (
+                                                  context,
+                                                  enabled,
+                                                  chatCtx,
+                                                  messages,
+                                                ) {
+                                                  return ChatWidget(
+                                                    messages: messages,
+                                                    onSend: (message) => chatCtx
+                                                        .sendMessage(message),
+                                                    onClose: () {
+                                                      chatCtx.toggleChat(false);
+                                                    },
+                                                  );
                                                 },
-                                              );
-                                            },
-                                      ),
-                                    ),
-                                  )
-                                : Expanded(
-                                    flex: 6,
-                                    child: Stack(
-                                      children: <Widget>[
-                                        /* Expanded(
-                                        child: TranscriptionBuilder(
-                                          builder:
-                                              (context, roomCtx, transcriptions) {
-                                            return TranscriptionWidget(
-                                              transcriptions: transcriptions,
-                                            );
-                                          },
-                                        ),
-                                      ),*/
-                                        /// show participant loop
-                                        ParticipantLoop(
-                                          showAudioTracks: false,
-                                          showVideoTracks: true,
-                                          showParticipantPlaceholder: true,
-
-                                          /// layout builder
-                                          layoutBuilder:
-                                              roomCtx.pinnedTracks.isNotEmpty
-                                              ? const CarouselLayoutBuilder()
-                                              : const GridLayoutBuilder(),
-
-                                          /// participant builder
-                                          participantTrackBuilder: (context, identifier) {
-                                            // build participant widget for each Track
-                                            return Padding(
-                                              padding: const EdgeInsets.all(
-                                                2.0,
-                                              ),
-                                              child: Stack(
-                                                children: [
-                                                  /// video track widget in the background
-                                                  identifier.isAudio &&
-                                                          roomCtx
-                                                              .enableAudioVisulizer
-                                                      ? const AudioVisualizerWidget(
-                                                          backgroundColor:
-                                                              LKColors
-                                                                  .lkDarkBlue,
-                                                        )
-                                                      : IsSpeakingIndicator(
-                                                          builder: (context, isSpeaking) {
-                                                            return isSpeaking !=
-                                                                    null
-                                                                ? IsSpeakingIndicatorWidget(
-                                                                    isSpeaking:
-                                                                        isSpeaking,
-                                                                    child:
-                                                                        const VideoTrackWidget(),
-                                                                  )
-                                                                : const VideoTrackWidget();
-                                                          },
-                                                        ),
-
-                                                  /// focus toggle button at the top right
-                                                  const Positioned(
-                                                    top: 0,
-                                                    right: 0,
-                                                    child: FocusToggle(),
-                                                  ),
-
-                                                  /// track stats at the top left
-                                                  const Positioned(
-                                                    top: 8,
-                                                    left: 0,
-                                                    child: TrackStatsWidget(),
-                                                  ),
-
-                                                  /// status bar at the bottom
-                                                  const Positioned(
-                                                    bottom: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    child:
-                                                        ParticipantStatusBar(),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-
-                                        /// show control bar at the bottom
-                                        Positioned(
-                                          bottom: 10.h,
-                                          left: 0,
-                                          right: 0,
-                                          child: SafeArea(
-                                            bottom: true,
-                                            child: ControlBar(
-                                              microphone: true,
-                                              onHandRaseTap: () {
-                                                log('onHandRaseTap');
-                                              },
-                                              onShareTap: () {
-                                                log('onShareTap');
-                                              },
-                                              iconSize: iconSizee,
-                                              horizontalPadding:
-                                                  horizontalPadding,
-                                              veriticalPadding:
-                                                  veriticalPadding,
-                                            ),
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
+                                      )
+                                    : Expanded(
+                                        flex: 6,
+                                        child: Stack(
+                                          children: <Widget>[
+                                            /* Expanded(
+                                            child: TranscriptionBuilder(
+                                              builder:
+                                                  (context, roomCtx, transcriptions) {
+                                                return TranscriptionWidget(
+                                                  transcriptions: transcriptions,
+                                                );
+                                              },
+                                            ),
+                                          ),*/
+                                            /// show participant loop
+                                            ParticipantLoop(
+                                              showAudioTracks: false,
+                                              showVideoTracks: true,
+                                              showParticipantPlaceholder: true,
 
-                            /// show chat widget on desktop
-                            (deviceScreenType != DeviceScreenType.mobile &&
-                                    roomCtx.isChatEnabled)
-                                ? Expanded(
-                                    flex: 2,
-                                    child: SizedBox(
-                                      width: 400,
-                                      child: ChatBuilder(
-                                        builder:
-                                            (
-                                              context,
-                                              enabled,
-                                              chatCtx,
-                                              messages,
-                                            ) {
-                                              return ChatWidget(
-                                                messages: messages,
-                                                onSend: (message) => chatCtx
-                                                    .sendMessage(message),
-                                                onClose: () {
-                                                  chatCtx.toggleChat(false);
-                                                },
-                                              );
-                                            },
+                                              /// layout builder
+                                              layoutBuilder:
+                                                  roomCtx
+                                                      .pinnedTracks
+                                                      .isNotEmpty
+                                                  ? const CarouselLayoutBuilder()
+                                                  : const GridLayoutBuilder(),
+
+                                              /// participant builder
+                                              participantTrackBuilder: (context, identifier) {
+                                                // build participant widget for each Track
+                                                return Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    2.0,
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      /// video track widget in the background
+                                                      identifier.isAudio &&
+                                                              roomCtx
+                                                                  .enableAudioVisulizer
+                                                          ? const AudioVisualizerWidget(
+                                                              backgroundColor:
+                                                                  LKColors
+                                                                      .lkDarkBlue,
+                                                            )
+                                                          : IsSpeakingIndicator(
+                                                              builder:
+                                                                  (
+                                                                    context,
+                                                                    isSpeaking,
+                                                                  ) {
+                                                                    return isSpeaking !=
+                                                                            null
+                                                                        ? IsSpeakingIndicatorWidget(
+                                                                            isSpeaking:
+                                                                                isSpeaking,
+                                                                            child:
+                                                                                const VideoTrackWidget(),
+                                                                          )
+                                                                        : const VideoTrackWidget();
+                                                                  },
+                                                            ),
+
+                                                      /// focus toggle button at the top right
+                                                      const Positioned(
+                                                        top: 0,
+                                                        right: 0,
+                                                        child: FocusToggle(),
+                                                      ),
+
+                                                      /// track stats at the top left
+                                                      const Positioned(
+                                                        top: 8,
+                                                        left: 0,
+                                                        child:
+                                                            TrackStatsWidget(),
+                                                      ),
+
+                                                      /// status bar at the bottom
+                                                      const Positioned(
+                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        child:
+                                                            ParticipantStatusBar(),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+
+                                            /// show control bar at the bottom
+                                            Positioned(
+                                              bottom: 10.h,
+                                              left: 0,
+                                              right: 0,
+                                              child: SafeArea(
+                                                bottom: true,
+                                                child: ControlBar(
+                                                  microphone: true,
+                                                  onHandRaseTap: () {
+                                                    log('onHandRaseTap');
+                                                  },
+                                                  onShareTap: () {
+                                                    log('onShareTap');
+                                                  },
+                                                  iconSize: iconSizee,
+                                                  horizontalPadding:
+                                                      horizontalPadding,
+                                                  veriticalPadding:
+                                                      veriticalPadding,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  )
-                                : const SizedBox(width: 0, height: 0),
+
+                                /// show chat widget on desktop
+                                (deviceScreenType != DeviceScreenType.mobile &&
+                                        roomCtx.isChatEnabled)
+                                    ? Expanded(
+                                        flex: 2,
+                                        child: SizedBox(
+                                          width: 400,
+                                          child: ChatBuilder(
+                                            builder:
+                                                (
+                                                  context,
+                                                  enabled,
+                                                  chatCtx,
+                                                  messages,
+                                                ) {
+                                                  return ChatWidget(
+                                                    messages: messages,
+                                                    onSend: (message) => chatCtx
+                                                        .sendMessage(message),
+                                                    onClose: () {
+                                                      chatCtx.toggleChat(false);
+                                                    },
+                                                  );
+                                                },
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox(width: 0, height: 0),
+                              ],
+                            ),
+
+                            /// show toast widget
+                            const Positioned(
+                              top: 30,
+                              left: 0,
+                              right: 0,
+                              child: ToastWidget(),
+                            ),
                           ],
                         ),
+                      ),
 
-                        /// show toast widget
-                        const Positioned(
-                          top: 30,
+                      if (showOverlay)
+                        Positioned(
                           left: 0,
                           right: 0,
-                          child: ToastWidget(),
+                          top:
+                              0, // Add top constraint to provide bounded height
+                          bottom: 0,
+                          child: Container(
+                            child: CustomDraggableBottomSheet(
+                              onDismiss: hideOverlay,
+                              bottomControllerWidget: ControlBar(
+                                microphone: true,
+                                onHandRaseTap: () {
+                                  log('onHandRaseTap');
+                                },
+                                onShareTap: () {
+                                  log('onShareTap');
+                                },
+                                iconSize: iconSizee,
+                                horizontalPadding: horizontalPadding,
+                                veriticalPadding: veriticalPadding,
+                              ),
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
+                    ],
                   );
                 } else {
                   return Center(
@@ -302,5 +344,11 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
         ),
       ),
     );
+  }
+
+  void hideOverlay() {
+    setState(() {
+      showOverlay = false;
+    });
   }
 }

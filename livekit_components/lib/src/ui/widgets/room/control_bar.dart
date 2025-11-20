@@ -83,187 +83,193 @@ class ControlBar extends StatelessWidget {
     return Align(
       alignment: Alignment.center,
       child: Container(
-        //  Container(
-        padding: EdgeInsets.symmetric(
-            horizontal: horizontalPadding ?? 10.0,
-            vertical: veriticalPadding ?? 8.0),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.4),
+          color: Color(0xFF212121),
           borderRadius: BorderRadius.circular(50),
         ),
+        child: Container(
+          //  Container(
+          padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding ?? 10.0,
+              vertical: veriticalPadding ?? 8.0),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(50),
+          ),
 
-        child: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          runAlignment: WrapAlignment.center,
-          spacing: betweenPaddingButtons / 1.1,
-          alignment: WrapAlignment.center,
-          // spacing: 6,
-          // runSpacing: 6,
-          children: [
-            InkWell(
-              highlightColor: Colors.transparent,
-              splashColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              focusColor: Colors.transparent,
-              onTap: () => onShareTap?.call(),
-              child: SvgPicture.asset(
-                'assets/svg/share_ic.svg',
-                width: iconSize,
-                height: iconSize,
-                package: 'livekit_components',
-              ),
-            ),
-            // SizedBox(width: betweenPaddingButtons ?? 18),
-            if (camera)
-              MediaDeviceSelectButton(
-                builder: (context, roomCtx, deviceCtx) =>
-                    MediaDeviceSelectWidget(
-                  iconSize: iconSize,
-                  isCustomIcon: true,
-                  selectedIcon: 'assets/svg/camera_ic.svg',
-                  unselectedIcon: 'assets/svg/camera_off_ic.svg',
-                  titleWidget: Text(
-                    'Camera',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  backgroundColor: backgroundColor,
-                  selectedColor: selectedColor,
-                  selectedOverlayColor: selectedOverlayColor,
-                  foregroundColor: foregroundColor,
-                  iconColor: iconColor,
-                  iconOn: Icons.videocam,
-                  iconOff: Icons.videocam_off,
-                  deviceList: deviceCtx.videoInputs ?? [],
-                  selectedDeviceId: deviceCtx.selectedVideoInputDeviceId,
-                  deviceIsOpened: deviceCtx.cameraOpened,
-                  onSelect: (device) => deviceCtx.selectVideoInput(device),
-                  onToggle: (enabled) => enabled
-                      ? deviceCtx.enableCamera()
-                      : deviceCtx.disableCamera(),
-                  showTitleWidget: showTitleWidget,
-                ),
-              ),
-            // if (isMobile && microphone)
-            //   SpeakerSwitch(
-            //       builder: (context, roomCtx, deviceCtx, isSpeakerOn) =>
-            //           SpeakerSwitchButton(
-            //             isSpeakerOn: isSpeakerOn ?? false,
-            //             onToggle: (speakerOn) =>
-            //                 deviceCtx.setSpeakerphoneOn(speakerOn),
-            //           )),
-            // if (isMobile && camera)
-            //   CameraSwitch(
-            //       builder: (context, roomCtx, deviceCtx, position) =>
-            //           CameraSwitchButton(
-            //             currentPosition: position,
-            //             onToggle: (newPosition) =>
-            //                 deviceCtx.switchCameraPosition(newPosition),
-            //           )),
-            // if (screenShare)
-            //   ScreenShareToggle(
-            //     builder: (context, roomCtx, deviceCtx, screenShareEnabled) =>
-            //         ScreenShareToggleWidget(
-            //       roomCtx: roomCtx,
-            //       deviceCtx: deviceCtx,
-            //       screenShareEnabled: screenShareEnabled,
-            //       showLabel: showTitleWidget,
-            //     ),
-            //   ),
-            // if (chat)
-            //   ChatToggle(
-            //     builder: (context, roomCtx, isChatEnabled) => ChatToggleWidget(
-            //       isChatOpen: roomCtx.isChatEnabled,
-            //       toggleChat: (enabled) => roomCtx.toggleChat(enabled),
-            //       showLabel: showTitleWidget,
-            //     ),
-            //   ),
-            if (leave)
-              DisconnectButton(
-                builder: (context, roomCtx, connected) =>
-                    DisconnectButtonWidget(
-                  iconSize: iconSize,
-                  isCustomIcon: true,
-                  selectedIcon: 'assets/svg/end_call_ic.svg',
-                  unselectedIcon: 'assets/svg/end_call_ic.svg',
-                  roomCtx: roomCtx,
-                  connected: connected,
-                  showLabel: showTitleWidget,
-                ),
-              ),
-            if (microphone )
-              MediaDeviceSelectButton(
-                builder: (context, roomCtx, deviceCtx) =>
-                    MediaDeviceSelectWidget(
-                  iconSize: iconSize,
-                  isCustomIcon: true,
-                  selectedIcon: 'assets/svg/mic_ic.svg',
-                  unselectedIcon: 'assets/svg/mic_off_ic.svg',
-                  titleWidget: Text(
-                    'Microphone',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  backgroundColor: backgroundColor,
-                  selectedColor: selectedColor,
-                  selectedOverlayColor: selectedOverlayColor,
-                  foregroundColor: foregroundColor,
-                  iconColor: iconColor,
-                  iconOn: Icons.mic,
-                  iconOff: Icons.mic_off,
-                  deviceList: deviceCtx.audioInputs ?? [],
-                  selectedDeviceId: deviceCtx.selectedAudioInputDeviceId,
-                  deviceIsOpened: deviceCtx.microphoneOpened,
-                  onSelect: (device) => deviceCtx.selectAudioInput(device),
-                  onToggle: (enabled) => enabled
-                      ? deviceCtx.enableMicrophone()
-                      : deviceCtx.disableMicrophone(),
-                  showTitleWidget: showTitleWidget,
-                ),
-              ),
-
-            if (microphone == false)
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runAlignment: WrapAlignment.center,
+            spacing: betweenPaddingButtons / 1.4,
+            alignment: WrapAlignment.center,
+            // spacing: 6,
+            // runSpacing: 6,
+            children: [
               InkWell(
                 highlightColor: Colors.transparent,
                 splashColor: Colors.transparent,
                 hoverColor: Colors.transparent,
                 focusColor: Colors.transparent,
-                onTap: () => onHandRaseTap?.call(),
+                onTap: () => onShareTap?.call(),
                 child: SvgPicture.asset(
-                  'assets/svg/hand_rase_ic.svg',
+                  'assets/svg/share_ic.svg',
                   width: iconSize,
                   height: iconSize,
                   package: 'livekit_components',
                 ),
               ),
-            // if (audioOutput &&
-            //     (lkPlatformIsDesktop() || lkPlatformIs(PlatformType.web)))
-            //   MediaDeviceSelectButton(
-            //     builder: (context, roomCtx, deviceCtx) =>
-            //         MediaDeviceSelectWidget(
-            //       iconSize: iconSize,
-            //       isCustomIcon: true,
-            //       selectedIcon: 'assets/svg/audio_output_ic.svg',
-            //       unselectedIcon: 'assets/svg/audio_output_off_ic.svg',
-            //       titleWidget: Text(
-            //         'Audio Output',
-            //         style: TextStyle(fontSize: 14),
-            //       ),
-            //       backgroundColor: backgroundColor,
-            //       selectedColor: selectedColor,
-            //       selectedOverlayColor: selectedOverlayColor,
-            //       foregroundColor: foregroundColor,
-            //       iconColor: iconColor,
-            //       iconOn: Icons.volume_up,
-            //       iconOff: Icons.volume_off,
-            //       deviceList: deviceCtx.audioOutputs ?? [],
-            //       selectedDeviceId: deviceCtx.selectedAudioOutputDeviceId,
-            //       deviceIsOpened: false,
-            //       toggleAvailable: false,
-            //       defaultSelectable: true,
-            //       onSelect: (device) => deviceCtx.selectAudioOutput(device),
-            //       showTitleWidget: showTitleWidget,
-            //     ),
-            //   ),
-          ],
+              // SizedBox(width: betweenPaddingButtons ?? 18),
+              if (camera)
+                MediaDeviceSelectButton(
+                  builder: (context, roomCtx, deviceCtx) =>
+                      MediaDeviceSelectWidget(
+                    iconSize: iconSize,
+                    isCustomIcon: true,
+                    selectedIcon: 'assets/svg/camera_ic.svg',
+                    unselectedIcon: 'assets/svg/camera_off_ic.svg',
+                    titleWidget: Text(
+                      'Camera',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    backgroundColor: backgroundColor,
+                    selectedColor: selectedColor,
+                    selectedOverlayColor: selectedOverlayColor,
+                    foregroundColor: foregroundColor,
+                    iconColor: iconColor,
+                    iconOn: Icons.videocam,
+                    iconOff: Icons.videocam_off,
+                    deviceList: deviceCtx.videoInputs ?? [],
+                    selectedDeviceId: deviceCtx.selectedVideoInputDeviceId,
+                    deviceIsOpened: deviceCtx.cameraOpened,
+                    onSelect: (device) => deviceCtx.selectVideoInput(device),
+                    onToggle: (enabled) => enabled
+                        ? deviceCtx.enableCamera()
+                        : deviceCtx.disableCamera(),
+                    showTitleWidget: showTitleWidget,
+                  ),
+                ),
+              // if (isMobile && microphone)
+              //   SpeakerSwitch(
+              //       builder: (context, roomCtx, deviceCtx, isSpeakerOn) =>
+              //           SpeakerSwitchButton(
+              //             isSpeakerOn: isSpeakerOn ?? false,
+              //             onToggle: (speakerOn) =>
+              //                 deviceCtx.setSpeakerphoneOn(speakerOn),
+              //           )),
+              // if (isMobile && camera)
+              //   CameraSwitch(
+              //       builder: (context, roomCtx, deviceCtx, position) =>
+              //           CameraSwitchButton(
+              //             currentPosition: position,
+              //             onToggle: (newPosition) =>
+              //                 deviceCtx.switchCameraPosition(newPosition),
+              //           )),
+              // if (screenShare)
+              //   ScreenShareToggle(
+              //     builder: (context, roomCtx, deviceCtx, screenShareEnabled) =>
+              //         ScreenShareToggleWidget(
+              //       roomCtx: roomCtx,
+              //       deviceCtx: deviceCtx,
+              //       screenShareEnabled: screenShareEnabled,
+              //       showLabel: showTitleWidget,
+              //     ),
+              //   ),
+              // if (chat)
+              //   ChatToggle(
+              //     builder: (context, roomCtx, isChatEnabled) => ChatToggleWidget(
+              //       isChatOpen: roomCtx.isChatEnabled,
+              //       toggleChat: (enabled) => roomCtx.toggleChat(enabled),
+              //       showLabel: showTitleWidget,
+              //     ),
+              //   ),
+              if (leave)
+                DisconnectButton(
+                  builder: (context, roomCtx, connected) =>
+                      DisconnectButtonWidget(
+                    iconSize: iconSize,
+                    isCustomIcon: true,
+                    selectedIcon: 'assets/svg/end_call_ic.svg',
+                    unselectedIcon: 'assets/svg/end_call_ic.svg',
+                    roomCtx: roomCtx,
+                    connected: connected,
+                    showLabel: showTitleWidget,
+                  ),
+                ),
+              if (microphone)
+                MediaDeviceSelectButton(
+                  builder: (context, roomCtx, deviceCtx) =>
+                      MediaDeviceSelectWidget(
+                    iconSize: iconSize,
+                    isCustomIcon: true,
+                    selectedIcon: 'assets/svg/mic_ic.svg',
+                    unselectedIcon: 'assets/svg/mic_off_ic.svg',
+                    titleWidget: Text(
+                      'Microphone',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    backgroundColor: backgroundColor,
+                    selectedColor: selectedColor,
+                    selectedOverlayColor: selectedOverlayColor,
+                    foregroundColor: foregroundColor,
+                    iconColor: iconColor,
+                    iconOn: Icons.mic,
+                    iconOff: Icons.mic_off,
+                    deviceList: deviceCtx.audioInputs ?? [],
+                    selectedDeviceId: deviceCtx.selectedAudioInputDeviceId,
+                    deviceIsOpened: deviceCtx.microphoneOpened,
+                    onSelect: (device) => deviceCtx.selectAudioInput(device),
+                    onToggle: (enabled) => enabled
+                        ? deviceCtx.enableMicrophone()
+                        : deviceCtx.disableMicrophone(),
+                    showTitleWidget: showTitleWidget,
+                  ),
+                ),
+
+              if (microphone == false)
+                InkWell(
+                  highlightColor: Colors.transparent,
+                  splashColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  focusColor: Colors.transparent,
+                  onTap: () => onHandRaseTap?.call(),
+                  child: SvgPicture.asset(
+                    'assets/svg/hand_rase_ic.svg',
+                    width: iconSize,
+                    height: iconSize,
+                    package: 'livekit_components',
+                  ),
+                ),
+              // if (audioOutput &&
+              //     (lkPlatformIsDesktop() || lkPlatformIs(PlatformType.web)))
+              //   MediaDeviceSelectButton(
+              //     builder: (context, roomCtx, deviceCtx) =>
+              //         MediaDeviceSelectWidget(
+              //       iconSize: iconSize,
+              //       isCustomIcon: true,
+              //       selectedIcon: 'assets/svg/audio_output_ic.svg',
+              //       unselectedIcon: 'assets/svg/audio_output_off_ic.svg',
+              //       titleWidget: Text(
+              //         'Audio Output',
+              //         style: TextStyle(fontSize: 14),
+              //       ),
+              //       backgroundColor: backgroundColor,
+              //       selectedColor: selectedColor,
+              //       selectedOverlayColor: selectedOverlayColor,
+              //       foregroundColor: foregroundColor,
+              //       iconColor: iconColor,
+              //       iconOn: Icons.volume_up,
+              //       iconOff: Icons.volume_off,
+              //       deviceList: deviceCtx.audioOutputs ?? [],
+              //       selectedDeviceId: deviceCtx.selectedAudioOutputDeviceId,
+              //       deviceIsOpened: false,
+              //       toggleAvailable: false,
+              //       defaultSelectable: true,
+              //       onSelect: (device) => deviceCtx.selectAudioOutput(device),
+              //       showTitleWidget: showTitleWidget,
+              //     ),
+              //   ),
+            ],
+          ),
         ),
       ),
     );

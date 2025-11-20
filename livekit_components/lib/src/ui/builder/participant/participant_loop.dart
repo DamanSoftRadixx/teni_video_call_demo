@@ -106,6 +106,7 @@ class ParticipantLoop extends StatelessWidget {
                         participant: identifier.participant,
                         track: track,
                         builder: (context) =>
+                            // SizedBox.shrink()
                             participantTrackBuilder(context, identifier),
                       ),
                     ),
