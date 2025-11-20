@@ -48,14 +48,13 @@ class VideoTrackWidget extends StatelessWidget {
 
     return Selector<TrackReferenceContext, bool>(
       selector: (ctx, isMuted) => trackCtx.isMuted,
-      builder: (BuildContext ctx, isMuted, child) =>
-          !isMuted && trackCtx.videoTrack != null
-              ? sdk.VideoTrackRenderer(
-                  trackCtx.videoTrack!,
-                  key: ValueKey(sid),
-                  fit: fit,
-                )
-              : _buildNoTrack(ctx),
+      builder: (BuildContext ctx, isMuted, child) => !isMuted && trackCtx.videoTrack != null
+          ? sdk.VideoTrackRenderer(
+              trackCtx.videoTrack!,
+              key: ValueKey(sid),
+              fit: fit,
+            )
+          : _buildNoTrack(ctx),
     );
   }
 }

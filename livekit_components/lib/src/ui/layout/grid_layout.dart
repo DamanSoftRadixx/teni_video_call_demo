@@ -32,7 +32,7 @@ class GridLayoutBuilder implements ParticipantLayoutBuilder {
     return GridView.count(
       crossAxisCount: deviceScreenType == DeviceScreenType.mobile &&
               orientation == Orientation.portrait
-          ? 2
+          ? (children.length>2?3:2)
           : 4,
       childAspectRatio: 1.5,
       children: children.map((e) => e.widget).toList(),

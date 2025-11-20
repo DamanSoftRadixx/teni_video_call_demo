@@ -37,6 +37,7 @@ class ParticipantLoop extends StatelessWidget {
     this.showAudioTracks = false,
     this.showVideoTracks = true,
     this.showParticipantPlaceholder = true,
+    this.showParticipantList = true,
   });
 
   final PaticipantTrackBuilder participantTrackBuilder;
@@ -46,6 +47,7 @@ class ParticipantLoop extends StatelessWidget {
   final bool showAudioTracks;
   final bool showVideoTracks;
   final bool showParticipantPlaceholder;
+  final bool showParticipantList;
 
   List<MapEntry<TrackIdentifier, TrackPublication?>> buildTracksMap(
       bool audio, bool video, List<Participant> participants) {
@@ -130,11 +132,33 @@ class ParticipantLoop extends StatelessWidget {
               return Selector<RoomContext, List<String>>(
                   selector: (context, pinnedTracks) => roomCtx.pinnedTracks,
                   builder: (context, pinnedTracks, child) {
+                    if (!showParticipantList) {
+                      final pinnedWidget =
+                          _resolvePinnedWidget(trackWidgets, pinnedTracks);
+                      return pinnedWidget?.widget ?? const SizedBox.shrink();
+                    }
                     return layoutBuilder.build(
                         context, trackWidgets, pinnedTracks);
                   });
             });
       },
     );
+  }
+
+  TrackWidget? _resolvePinnedWidget(
+    List<TrackWidget> trackWidgets,
+    List<String> pinnedTracks,
+  ) {
+    for (final sid in pinnedTracks) {
+      for (final widget in trackWidgets) {
+        if (widget.trackIdentifier.identifier == sid) {
+          return widget;
+        }
+      }
+    }
+    if (trackWidgets.isNotEmpty) {
+      return trackWidgets.first;
+    }
+    return null;
   }
 }

@@ -1,19 +1,23 @@
-import 'dart:math' show Random;
-
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:livekit_components/livekit_components.dart';
+import 'package:livekit_client/livekit_client.dart';
 import 'package:provider/provider.dart';
 
 class CustomDraggableBottomSheet extends StatefulWidget {
   final VoidCallback onDismiss;
   final Widget? bottomControllerWidget;
+  final List<Participant>? liveParticipants;
+  final Function(Participant)? onParticipantSelected;
 
   const CustomDraggableBottomSheet({
     Key? key,
     required this.onDismiss,
     this.bottomControllerWidget,
+    this.liveParticipants,
+    this.onParticipantSelected,
   }) : super(key: key);
 
   @override
@@ -24,7 +28,7 @@ class CustomDraggableBottomSheet extends StatefulWidget {
 class _CustomDraggableBottomSheetState
     extends State<CustomDraggableBottomSheet> {
   // Demo data for grid items
-  final List<ParticipantData> participants = [
+  final List<ParticipantData> dummyParticipants = [
     ParticipantData(
       name: 'You sadf ',
       imageUrl: 'assets/avatar1.png',
@@ -54,7 +58,8 @@ class _CustomDraggableBottomSheetState
     ParticipantData(name: 'Alex Xel', imageUrl: 'assets/avatar9.png'),
   ];
 
-  ParticipantData? selectedParticipant;
+  // Map to track selected participant by identity
+  String? selectedParticipantIdentity;
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
 
@@ -69,17 +74,25 @@ class _CustomDraggableBottomSheetState
     var backgroundBlackColor = Color(0xFF212121);
     final screenHeight = MediaQuery.of(context).size.height;
 
+    // Use live participants if available, otherwise use dummy data
+    final participants = widget.liveParticipants ?? [];
+    final useDummyData = widget.liveParticipants == null;
+    final participantCount = useDummyData
+        ? dummyParticipants.length
+        : participants.length;
+
     // Calculate heights for different states
     // Initial: 1 row of 3 items + header + bottom margin (approximately 220-250px)
-    final double minChildSize = 210.h / screenHeight; // ~1 row visible
+    final double minChildSize = 195.h / screenHeight; // ~1 row visible
+    // final double minChildSize = 210.h / screenHeight; // ~1 row visible
     double initialChildSize = minChildSize;
     final double mediumChildSize = 0.5; // 50% of screen
     final double maxChildSize = 0.95; // 90% of screen
 
     // Determine initial size based on participant count
-    if (participants.length < 4) {
+    if (participantCount < 4) {
       initialChildSize = minChildSize;
-    } else if (participants.length < 7) {
+    } else if (participantCount < 7) {
       initialChildSize = mediumChildSize;
     } else {
       initialChildSize = maxChildSize;
@@ -95,15 +108,17 @@ class _CustomDraggableBottomSheetState
     return NotificationListener<DraggableScrollableNotification>(
       onNotification: (notification) {
         // Only unselect when reaching min extent (fully collapsed)
-        if (notification.extent <= mediumChildSize + 0.01 &&
-            selectedParticipant != null) {
+        if (notification.extent <= mediumChildSize + 0.01) {
           // Sheet has reached min size - clear all selections
           setState(() {
-            for (var participant in participants) {
-              participant.participantSelectionType =
-                  ParticipantSelectionType.none;
+            if (useDummyData) {
+              for (var participant in dummyParticipants) {
+                participant.participantSelectionType =
+                    ParticipantSelectionType.none;
+              }
+            } else {
+              selectedParticipantIdentity = null;
             }
-            selectedParticipant = null;
           });
         }
         return false;
@@ -119,21 +134,14 @@ class _CustomDraggableBottomSheetState
             false, // Prevent closing when reaching minExtent
         builder: (BuildContext context, ScrollController scrollController) {
           bool isCameraViewVisible = false;
-          bool isMyMicOne = false;
           ParticipantType isMyParitpicantType = ParticipantType.guest;
           double horizontalPadding = 10.w;
           double veriticalPadding = 8.h;
           double iconSize = 42.w;
-          String micOnOffRaiseHandIconPath = 'assets/svg/mic_off_ic.svg';
-          if (isMyParitpicantType == ParticipantType.guest) {
-            micOnOffRaiseHandIconPath = 'assets/svg/hand_rase_ic.svg';
-          } else {
-            if (isMyMicOne) {
-              micOnOffRaiseHandIconPath = 'assets/svg/mic_ic.svg';
-            } else {
-              micOnOffRaiseHandIconPath = 'assets/svg/mic_off_ic.svg';
-            }
-          }
+          String micOnOffRaiseHandIconPath =
+              isMyParitpicantType == ParticipantType.guest
+              ? 'assets/svg/hand_rase_ic.svg'
+              : 'assets/svg/mic_off_ic.svg';
           // Using state variable selectedParticipant instead of local variable
 
           return Container(
@@ -267,29 +275,6 @@ class _CustomDraggableBottomSheetState
                             // ),
                           ),
 
-                          // Selected participate View (draggable)
-                          if (selectedParticipant != null)
-                            SliverToBoxAdapter(
-                              child: Container(
-                                width: double.infinity,
-                                height: 200.h,
-                                margin: EdgeInsets.only(
-                                  left: 16.w,
-                                  right: 16.w,
-                                  top: 10.h,
-                                  bottom: 10.h,
-                                ),
-                                child: ParticipantTile(
-                                  isBigView: true,
-                                  isVideoVisible: Random().nextBool(),
-                                  participant: selectedParticipant!,
-                                  onHandRaseMicIconClicked: () {},
-                                  onCloseIconClicked: () {},
-                                  onItemClicked: () {},
-                                ),
-                              ),
-                            ),
-
                           SliverPadding(
                             padding: EdgeInsets.only(
                               left: 16.w,
@@ -297,60 +282,13 @@ class _CustomDraggableBottomSheetState
                               top: 0,
                               bottom: 80.h,
                             ),
-                            sliver: SliverGrid(
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    crossAxisSpacing: 9.w,
-                                    mainAxisSpacing: 9.w,
-                                    childAspectRatio:
-                                        1.0, // 1.0 = perfect square (width = height)
+                            sliver: useDummyData
+                                ? _buildDummyParticipantGrid(maxChildSize)
+                                : _buildLiveParticipantGrid(
+                                    participants,
+                                    maxChildSize,
+                                    minChildSize,
                                   ),
-                              delegate: SliverChildBuilderDelegate((
-                                context,
-                                index,
-                              ) {
-                                return ParticipantTile(
-                                  isVideoVisible: index == 1 ? true : false,
-                                  participant: participants[index],
-                                  onHandRaseMicIconClicked: () {
-                                    print('Item: onHandRaseMicIconClicked');
-                                  },
-                                  onCloseIconClicked: () {
-                                    print('Item: onCloseIconClicked');
-                                  },
-                                  onItemClicked: () {
-                                    setState(() {
-                                      // Clear all selections
-                                      for (
-                                        var i = 0;
-                                        i < participants.length;
-                                        i++
-                                      ) {
-                                        participants[i]
-                                                .participantSelectionType =
-                                            ParticipantSelectionType.none;
-                                      }
-                                      // Select the clicked participant
-                                      participants[index]
-                                              .participantSelectionType =
-                                          ParticipantSelectionType.selected;
-                                      // Update selectedParticipant
-                                      selectedParticipant = participants[index];
-                                    });
-                                    // Expand to max size when item is selected
-                                    _sheetController.animateTo(
-                                      maxChildSize,
-                                      duration: Duration(milliseconds: 300),
-                                      curve: Curves.easeOut,
-                                    );
-                                    print(
-                                      'Item: onItemClicked - ${participants[index].name}',
-                                    );
-                                  },
-                                );
-                              }, childCount: participants.length),
-                            ),
                           ),
                         ],
                       ),
@@ -435,6 +373,137 @@ class _CustomDraggableBottomSheetState
           );
         },
       ),
+    );
+  }
+
+  SliverGrid _buildDummyParticipantGrid(double maxChildSize) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 9.w,
+        mainAxisSpacing: 9.w,
+        childAspectRatio: 1.0,
+      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        return ParticipantTile(
+          isVideoVisible: index == 1 ? true : false,
+          participant: dummyParticipants[index],
+          onHandRaseMicIconClicked: () {
+            print('Item: onHandRaseMicIconClicked');
+          },
+          onCloseIconClicked: () {
+            print('Item: onCloseIconClicked');
+          },
+          onItemClicked: () {
+            setState(() {
+              // Clear all selections
+              for (var i = 0; i < dummyParticipants.length; i++) {
+                dummyParticipants[i].participantSelectionType =
+                    ParticipantSelectionType.none;
+              }
+              // Select the clicked participant
+              dummyParticipants[index].participantSelectionType =
+                  ParticipantSelectionType.selected;
+            });
+            // Expand to max size when item is selected
+            _sheetController.animateTo(
+              maxChildSize,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+            print('Item: onItemClicked - ${dummyParticipants[index].name}');
+          },
+        );
+      }, childCount: dummyParticipants.length),
+    );
+  }
+
+  SliverGrid _buildLiveParticipantGrid(
+    List<Participant> participants,
+    double maxChildSize,
+    double minChildSize,
+  ) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 9.w,
+        mainAxisSpacing: 9.w,
+        childAspectRatio: 1.0,
+      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final liveParticipant = participants[index];
+        final isSelected =
+            selectedParticipantIdentity == liveParticipant.identity;
+        final isLocal = liveParticipant is LocalParticipant;
+
+        // Check if participant has camera enabled
+        bool hasVideo = false;
+        if (liveParticipant is LocalParticipant) {
+          hasVideo = liveParticipant.isCameraEnabled();
+        } else if (liveParticipant is RemoteParticipant) {
+          hasVideo = liveParticipant.trackPublications.values.any(
+            (pub) => pub.kind == TrackType.VIDEO && !pub.muted,
+          );
+        }
+
+        // Check if participant has mic enabled
+        bool hasMic = !liveParticipant.isMuted;
+
+        // Convert live participant to ParticipantData for display
+        final participantData = ParticipantData(
+          name: liveParticipant.name.isNotEmpty
+              ? liveParticipant.name
+              : liveParticipant.identity,
+          imageUrl: 'assets/avatar1.png',
+          isCameraOff: !hasVideo,
+          participantType: isLocal
+              ? ParticipantType.host
+              : ParticipantType.guest,
+          participantMicStatus: hasMic
+              ? ParticipantMicStatus.on
+              : ParticipantMicStatus.off,
+          participantSelectionType: isSelected
+              ? ParticipantSelectionType.selected
+              : ParticipantSelectionType.none,
+        );
+
+        return ParticipantTile(
+          isVideoVisible: hasVideo,
+          participant: participantData,
+          onHandRaseMicIconClicked: () {
+            print(
+              'Item: onHandRaseMicIconClicked - ${liveParticipant.identity}',
+            );
+          },
+          onCloseIconClicked: () {
+            print('Item: onCloseIconClicked - ${liveParticipant.identity}');
+          },
+          onItemClicked: () {
+            if (selectedParticipantIdentity == liveParticipant.identity) {
+              if (kDebugMode) {
+                print(
+                  'Participant already selected: ${liveParticipant.identity}',
+                );
+              }
+              return;
+            }
+            setState(() {
+              selectedParticipantIdentity = liveParticipant.identity;
+            });
+            widget.onParticipantSelected?.call(liveParticipant);
+            // Expand to max size when item is selected
+            _sheetController.animateTo(
+              // maxChildSize,
+              minChildSize,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+            print(
+              'Item: onItemClicked - ${liveParticipant.name} (${liveParticipant.identity})',
+            );
+          },
+        );
+      }, childCount: participants.length),
     );
   }
 
@@ -676,7 +745,7 @@ class ParticipantTile extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 // Participant avatar/video
-                _participantVideoOrEmptyViewWidget(
+                participantVideoOrEmptyViewWidget(
                   name: participant.name,
                   isSelfView: isSelfView,
                   isVideoVisible: isVideoVisible,
@@ -785,63 +854,6 @@ class ParticipantTile extends StatelessWidget {
     //     ],
     //   ),
     // );
-  }
-
-  Widget _participantVideoOrEmptyViewWidget({
-    required String name,
-    required bool isSelfView,
-    required bool isVideoVisible,
-    required ParticipantType participantType,
-    required ParticipantMicStatus participantMicStatus,
-    required ParticipantSelectionType participantSelectionType,
-  }) {
-    String showName = isSelfView ? 'You' : name.substring(0, 1);
-    print('isVideoVisible: $isVideoVisible');
-    if (isVideoVisible) {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/png/dummy_ai_person_img.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            margin: EdgeInsets.all(20.w),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.2),
-              // borderRadius: BorderRadius.circular(100),
-            ),
-            child: Center(
-              child: Text(
-                showName,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _participantUserDetailShowWidget({
@@ -953,6 +965,63 @@ class ParticipantTile extends StatelessWidget {
       ],
     );
   }
+}
+
+Widget participantVideoOrEmptyViewWidget({
+  required String name,
+  required bool isSelfView,
+  required bool isVideoVisible,
+  required ParticipantType participantType,
+  required ParticipantMicStatus participantMicStatus,
+  required ParticipantSelectionType participantSelectionType,
+}) {
+  String showName = isSelfView ? 'You' : name.substring(0, 1);
+  print('isVideoVisible: $isVideoVisible');
+  if (isVideoVisible) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/png/dummy_ai_person_img.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  return Container(
+    width: double.infinity,
+    height: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.black,
+      borderRadius: BorderRadius.circular(12.r),
+    ),
+    child: Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          margin: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.2),
+            // borderRadius: BorderRadius.circular(100),
+          ),
+          child: Center(
+            child: Text(
+              showName,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class SimpleSliverDelegate extends SliverPersistentHeaderDelegate {

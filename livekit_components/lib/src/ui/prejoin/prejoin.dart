@@ -87,15 +87,15 @@ class Prejoin extends StatelessWidget {
     return Consumer<RoomContext>(
       builder: (context, roomCtx, child) {
         return Center(
-          child: SafeArea(
-            bottom: true,
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              padding: EdgeInsets.symmetric(
-                  horizontal: horizontalScreenPadding ?? 16,
-                  vertical: verticalScreenPadding ?? 0.0),
-              decoration: BoxDecoration(color: Color(0xFF212121)),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            padding: EdgeInsets.symmetric(
+                horizontal: horizontalScreenPadding ?? 16,
+                vertical: verticalScreenPadding ?? 0.0),
+            decoration: BoxDecoration(color: Color(0xFF212121)),
+            child: SafeArea(
+              bottom: true,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
