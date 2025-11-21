@@ -13,8 +13,9 @@ import 'package:teni_video_call_demo/feature/video_calling/domain/entities/video
 import 'package:livekit_components/livekit_components.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:responsive_builder/responsive_builder.dart';
+import 'package:teni_video_call_demo/feature/video_calling/presentation/screen/widgets/custom_draggable_bottom_sheet.dart';
 
-import '../../../login/presentation/screen/widget/custom_draggable_bottom_sheet.dart'
+import '../../../video_calling/presentation/screen/widgets/custom_draggable_bottom_sheet.dart'
     show
         CustomDraggableBottomSheet,
         participantVideoOrEmptyViewWidget,
@@ -50,6 +51,7 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
     double horizontalPadding = 10.w;
     double veriticalPadding = 8.h;
     double betweenPaddingButtons = 14.w;
+    double borderRadiusForPinnedVideoView = 10.r;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -105,9 +107,18 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                     }
                     if (isNotConnected) {
                       return Prejoin(
+                        emptyWidget: participantVideoOrEmptyViewWidget(
+                          name: widget.videoCallingParsingModel.participantName,
+                          isSelfView: false,
+                          isVideoVisible: false,
+                          participantType: ParticipantType.ai,
+                          participantMicStatus: ParticipantMicStatus.on,
+                          participantSelectionType:
+                              ParticipantSelectionType.none,
+                        ),
                         horizontalScreenPadding: 16.w,
                         verticalScreenPadding: 0.h,
-                        screenBorderRadius: 12,
+                        screenBorderRadius: borderRadiusForPinnedVideoView,
                         iconSize: iconSizee,
                         veriticalPadding: veriticalPadding,
                         horizontalPadding: horizontalPadding,
@@ -168,15 +179,22 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                                         context,
                                                       ).size.height *
                                                       0.65,
-                                                  child: Padding(
-                                                    padding:
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            borderRadiusForPinnedVideoView,
+                                                          ),
+                                                    ),
+                                                    margin:
                                                         EdgeInsets.symmetric(
-                                                          horizontal: 16.w,
+                                                          horizontal: 14.w,
                                                         ),
                                                     child: ClipRRect(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                            14.r,
+                                                            borderRadiusForPinnedVideoView,
                                                           ),
                                                       child: Stack(
                                                         children: <Widget>[
@@ -202,79 +220,124 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
 
                                                             /// participant builder
                                                             participantTrackBuilder: (context, identifier) {
+                                                              String userName =
+                                                                  (identifier
+                                                                      .participant
+                                                                      .name
+                                                                      .trim()
+                                                                      .isEmpty)
+                                                                  ? identifier
+                                                                        .participant
+                                                                        .identity
+                                                                        .trim()
+                                                                  : identifier
+                                                                        .participant
+                                                                        .name
+                                                                        .trim();
+
                                                               // build participant widget for each Track
-                                                              return Padding(
-                                                                padding:
-                                                                    const EdgeInsets.all(
-                                                                      2.0,
-                                                                    ),
-                                                                child: Stack(
-                                                                  children: [
-                                                                    /// video track widget in the background
-                                                                    identifier.isAudio &&
-                                                                            roomCtx.enableAudioVisulizer
-                                                                        ? const AudioVisualizerWidget(
-                                                                            backgroundColor:
-                                                                                LKColors.lkDarkBlue,
-                                                                          )
-                                                                        : IsSpeakingIndicator(
-                                                                            builder:
-                                                                                (
-                                                                                  context,
-                                                                                  isSpeaking,
-                                                                                ) {
-                                                                                  return isSpeaking !=
-                                                                                          null
-                                                                                      ? IsSpeakingIndicatorWidget(
-                                                                                          isSpeaking: isSpeaking,
-                                                                                          child: VideoTrackWidget(
-                                                                                            noTrackBuilder:
-                                                                                                (
-                                                                                                  context,
-                                                                                                ) {
-                                                                                                  return participantVideoOrEmptyViewWidget(
-                                                                                                    name: identifier.participant.name.isEmpty
-                                                                                                        ? identifier.participant.identity
-                                                                                                        : identifier.participant.name,
-                                                                                                    isSelfView: false,
-                                                                                                    isVideoVisible: false,
-                                                                                                    participantType: ParticipantType.ai,
-                                                                                                    participantMicStatus: ParticipantMicStatus.on,
-                                                                                                    participantSelectionType: ParticipantSelectionType.none,
-                                                                                                  );
-                                                                                                },
-                                                                                          ),
-                                                                                        )
-                                                                                      : const VideoTrackWidget();
-                                                                                },
-                                                                          ),
+                                                              return Stack(
+                                                                children: [
+                                                                  /// video track widget in the background
+                                                                  identifier.isAudio &&
+                                                                          roomCtx
+                                                                              .enableAudioVisulizer
+                                                                      ? const AudioVisualizerWidget(
+                                                                          backgroundColor:
+                                                                              LKColors.lkDarkBlue,
+                                                                        )
+                                                                      : IsSpeakingIndicator(
+                                                                          builder:
+                                                                              (
+                                                                                context,
+                                                                                isSpeaking,
+                                                                              ) {
+                                                                                return isSpeaking !=
+                                                                                        null
+                                                                                    ? IsSpeakingIndicatorWidget(
+                                                                                        borderGradient: LinearGradient(
+                                                                                          colors: [
+                                                                                            Color(
+                                                                                              0xFF7B9AFF,
+                                                                                            ),
+                                                                                            Color(
+                                                                                              0xFF7B9AFF,
+                                                                                            ),
+                                                                                          ],
+                                                                                        ),
+                                                                                        borderWidth: 3.w,
+                                                                                        borderRadius: 10.r,
+                                                                                        isSpeaking: isSpeaking,
+                                                                                        child: VideoTrackWidget(
+                                                                                          fit: VideoViewFit.cover,
+                                                                                          noTrackBuilder:
+                                                                                              (
+                                                                                                context,
+                                                                                              ) {
+                                                                                                return participantVideoOrEmptyViewWidget(
+                                                                                                  name: userName,
+                                                                                                  isSelfView: false,
+                                                                                                  isVideoVisible: false,
+                                                                                                  participantType: ParticipantType.ai,
+                                                                                                  participantMicStatus: ParticipantMicStatus.on,
+                                                                                                  participantSelectionType: ParticipantSelectionType.none,
+                                                                                                );
+                                                                                              },
+                                                                                        ),
+                                                                                      )
+                                                                                    : VideoTrackWidget(
+                                                                                        noTrackBuilder:
+                                                                                            (
+                                                                                              context,
+                                                                                            ) {
+                                                                                              return participantVideoOrEmptyViewWidget(
+                                                                                                name: userName,
+                                                                                                isSelfView: false,
+                                                                                                isVideoVisible: false,
+                                                                                                participantType: ParticipantType.ai,
+                                                                                                participantMicStatus: ParticipantMicStatus.on,
+                                                                                                participantSelectionType: ParticipantSelectionType.none,
+                                                                                              );
+                                                                                            },
+                                                                                      );
+                                                                              },
+                                                                        ),
 
-                                                                    /// focus toggle button at the top right , to show in big view
-                                                                    const Positioned(
-                                                                      top: 0,
-                                                                      right: 0,
-                                                                      child:
-                                                                          FocusToggle(),
-                                                                    ),
+                                                                  /// focus toggle button at the top right , to show in big view
+                                                                  // const Positioned(
+                                                                  //   top: 0,
+                                                                  //   right: 0,
+                                                                  //   child:
+                                                                  //       FocusToggle(),
+                                                                  // ),
 
-                                                                    /// track stats at the top left
-                                                                    const Positioned(
-                                                                      top: 8,
-                                                                      left: 0,
-                                                                      child:
-                                                                          TrackStatsWidget(),
-                                                                    ),
+                                                                  /// track stats at the top left
+                                                                  const Positioned(
+                                                                    top: 8,
+                                                                    left: 0,
+                                                                    child:
+                                                                        TrackStatsWidget(),
+                                                                  ),
 
-                                                                    /// status bar at the bottom
-                                                                    const Positioned(
-                                                                      bottom: 0,
-                                                                      left: 0,
-                                                                      right: 0,
-                                                                      child:
-                                                                          ParticipantStatusBar(),
+                                                                  /// status bar at the bottom
+                                                                  // const Positioned(
+                                                                  //   bottom: 0,
+                                                                  //   left: 0,
+                                                                  //   right: 0,
+                                                                  //   child:
+                                                                  //       ParticipantStatusBar(),
+                                                                  // ),
+                                                                  Positioned(
+                                                                    bottom: 8.w,
+                                                                    left: 8.w,
+                                                                    child: _showUserNameWidget(
+                                                                      name:
+                                                                          userName,
+                                                                      isSelfView:
+                                                                          false,
                                                                     ),
-                                                                  ],
-                                                                ),
+                                                                  ),
+                                                                ],
                                                               );
                                                             },
                                                           ),
@@ -378,25 +441,15 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                     final videoPublication =
                                         _findVideoPublication(participant);
 
-                                    if (videoPublication == null) {
-                                      // No video to pin, so just clear any existing focus
-                                      roomCtx.clearPinnedTracks();
-                                      setState(
-                                        () =>
-                                            selectedParticipantIdentity = null,
-                                      );
-                                      if (kDebugMode) {
-                                        log(
-                                          'No video track to pin for ${participant.identity}',
-                                        );
-                                      }
-                                      return;
-                                    }
+                                    // Use participant identity as fallback if no video track
+                                    final trackId =
+                                        videoPublication?.sid ??
+                                        participant.identity;
 
+                                    // Check if already pinned
                                     final alreadyPinned =
                                         roomCtx.pinnedTracks.isNotEmpty &&
-                                        roomCtx.pinnedTracks.first ==
-                                            videoPublication.sid;
+                                        roomCtx.pinnedTracks.first == trackId;
 
                                     if (alreadyPinned) {
                                       if (kDebugMode) {
@@ -407,17 +460,25 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                       return;
                                     }
 
-                                    roomCtx.pinningTrack(videoPublication.sid);
+                                    // Pin the track (or participant identity if no video)
+                                    roomCtx.pinningTrack(trackId);
                                     setState(
                                       () => selectedParticipantIdentity =
                                           participant.identity,
                                     );
 
                                     if (kDebugMode) {
-                                      log(
-                                        'Selected participant: ${participant.name} '
-                                        '(${participant.identity}) -> ${videoPublication.sid}',
-                                      );
+                                      if (videoPublication == null) {
+                                        log(
+                                          'Pinning participant without video: ${participant.name} '
+                                          '(${participant.identity})',
+                                        );
+                                      } else {
+                                        log(
+                                          'Selected participant: ${participant.name} '
+                                          '(${participant.identity}) -> ${videoPublication.sid}',
+                                        );
+                                      }
                                     }
                                     // setState(() {
                                     //   selectedParticipantIdentity =
@@ -474,6 +535,29 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _showUserNameWidget({required String name, required bool isSelfView}) {
+    String showName = isSelfView ? 'You' : name.substring(0, 3);
+    return Container(
+      // margin: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        // shape: BoxShape.circle,
+        color: Colors.black.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
+      child: Center(
+        child: Text(
+          showName,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

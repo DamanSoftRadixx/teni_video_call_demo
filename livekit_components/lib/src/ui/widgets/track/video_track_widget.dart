@@ -43,18 +43,20 @@ class VideoTrackWidget extends StatelessWidget {
     Debug.log('===>     VideoTrackWidget for $sid');
 
     if (trackCtx == null || trackCtx.videoTrack == null) {
-      return const NoTrackWidget();
+      return _buildNoTrack(context );
+      // return const NoTrackWidget();
     }
 
     return Selector<TrackReferenceContext, bool>(
       selector: (ctx, isMuted) => trackCtx.isMuted,
-      builder: (BuildContext ctx, isMuted, child) => !isMuted && trackCtx.videoTrack != null
-          ? sdk.VideoTrackRenderer(
-              trackCtx.videoTrack!,
-              key: ValueKey(sid),
-              fit: fit,
-            )
-          : _buildNoTrack(ctx),
+      builder: (BuildContext ctx, isMuted, child) =>
+          !isMuted && trackCtx.videoTrack != null
+              ? sdk.VideoTrackRenderer(
+                  trackCtx.videoTrack!,
+                  key: ValueKey(sid),
+                  fit: fit,
+                )
+              : _buildNoTrack(ctx),
     );
   }
 }

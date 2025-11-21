@@ -16,30 +16,71 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
+// class IsSpeakingIndicatorWidget extends StatelessWidget {
+//   const IsSpeakingIndicatorWidget({
+//     Key? key,
+//     required this.isSpeaking,
+//     required this.child,
+//     this.borderColor = LKColors.lkBlue,
+//   }) : super(key: key);
+
+//   final bool isSpeaking;
+//   final Widget child;
+//   final Color borderColor;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       foregroundDecoration: BoxDecoration(
+//         border: isSpeaking
+//             ? Border.all(
+//                 width: 3,
+//                 color: borderColor,
+//               )
+//             : null,
+//       ),
+//       child: child,
+//     );
+//   }
+// }
+
 class IsSpeakingIndicatorWidget extends StatelessWidget {
-  const IsSpeakingIndicatorWidget({
+  IsSpeakingIndicatorWidget({
     Key? key,
+    this.borderWidth = 3,
+    this.borderRadius = 10,
+    this.borderGradient,
     required this.isSpeaking,
     required this.child,
     this.borderColor = LKColors.lkBlue,
   }) : super(key: key);
-
   final bool isSpeaking;
+  final double borderWidth;
+  final double borderRadius;
   final Widget child;
   final Color borderColor;
-
+  final LinearGradient? borderGradient;
   @override
   Widget build(BuildContext context) {
     return Container(
-      foregroundDecoration: BoxDecoration(
-        border: isSpeaking
-            ? Border.all(
-                width: 3,
-                color: borderColor,
-              )
-            : null,
+      decoration: BoxDecoration(
+        gradient: borderGradient,
+        color: borderGradient != null ? borderColor : null,
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: child,
+      child: Padding(
+        padding: EdgeInsets.all(!isSpeaking ? 0 : borderWidth),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }

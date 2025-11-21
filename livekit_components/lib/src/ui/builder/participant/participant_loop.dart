@@ -151,7 +151,9 @@ class ParticipantLoop extends StatelessWidget {
   ) {
     for (final sid in pinnedTracks) {
       for (final widget in trackWidgets) {
-        if (widget.trackIdentifier.identifier == sid) {
+        // Match by track identifier (sid) or participant identity
+        if (widget.trackIdentifier.identifier == sid ||
+            widget.trackIdentifier.participant.identity == sid) {
           return widget;
         }
       }

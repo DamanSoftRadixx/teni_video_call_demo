@@ -995,7 +995,7 @@ Widget participantVideoOrEmptyViewWidget({
     height: double.infinity,
     decoration: BoxDecoration(
       color: Colors.black,
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(10.r),
     ),
     child: Stack(
       children: [

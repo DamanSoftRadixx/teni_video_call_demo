@@ -275,16 +275,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
 
             // Draggable overlay (non-modal, clickable background)
-            if (_showOverlay)
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0, // Add top constraint to provide bounded height
-                bottom: 0,
-                child: Container(
-                  child: CustomDraggableBottomSheet(onDismiss: hideOverlay),
-                ),
-              ),
+            // if (_showOverlay)
+            //   Positioned(
+            //     left: 0,
+            //     right: 0,
+            //     top: 0, // Add top constraint to provide bounded height
+            //     bottom: 0,
+            //     child: Container(
+            //       child: CustomDraggableBottomSheet(onDismiss: hideOverlay),
+            //     ),
+            //   ),
           ],
         ),
       ),
@@ -773,27 +773,27 @@ class _CustomDraggableBottomSheetState
                                         ),
                                       ),
                                       // Close button
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: GestureDetector(
-                                          onTap: widget
-                                              .onDismiss, // Hide the overlay completely
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                              right: 16.w,
-                                            ),
-                                            child: Icon(
-                                              Icons.close,
-                                              color: Colors.white.withValues(
-                                                alpha: 0.7,
-                                              ),
-                                              size: 24.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                      // Positioned(
+                                      //   right: 0,
+                                      //   top: 0,
+                                      //   bottom: 0,
+                                      //   child: GestureDetector(
+                                      //     onTap: widget
+                                      //         .onDismiss, // Hide the overlay completely
+                                      //     child: Container(
+                                      //       padding: EdgeInsets.only(
+                                      //         right: 16.w,
+                                      //       ),
+                                      //       child: Icon(
+                                      //         Icons.close,
+                                      //         color: Colors.white.withValues(
+                                      //           alpha: 0.7,
+                                      //         ),
+                                      //         size: 24.sp,
+                                      //       ),
+                                      //     ),
+                                      //   ),
+                                      // ),
                                     ],
                                   ),
                                 ),

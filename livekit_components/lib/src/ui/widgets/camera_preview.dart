@@ -52,3 +52,32 @@ class CameraPreviewWidget extends StatelessWidget {
     );
   }
 }
+
+class CameraPreviewWidgetCustom extends StatelessWidget {
+  const CameraPreviewWidgetCustom({
+    super.key,
+    required this.track,
+    required this.emptyWidget,
+    required this.backgroundColor,
+    required this.borderRadius,
+  });
+  final LocalVideoTrack? track;
+  final Widget emptyWidget;
+  final Color backgroundColor;
+  final double borderRadius;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: track != null
+            ? VideoTrackRenderer(track!, fit: VideoViewFit.cover)
+            : Center(child: emptyWidget),
+      ),
+    );
+  }
+}

@@ -37,6 +37,8 @@ class Prejoin extends StatelessWidget {
   double? horizontalScreenPadding;
   double? verticalScreenPadding;
   double? screenBorderRadius;
+  Widget? emptyWidget;
+
   Prejoin(
       {super.key,
       required this.token,
@@ -50,7 +52,8 @@ class Prejoin extends StatelessWidget {
       this.screenBorderRadius,
       this.borderRadius,
       this.onJoinPressed,
-      this.customStartButton});
+      this.customStartButton,
+      this.emptyWidget});
 
   final Function(RoomContext roomCtx, String url, String token)? onJoinPressed;
 
@@ -127,7 +130,11 @@ class Prejoin extends StatelessWidget {
                         children: [
                           CameraPreview(
                             builder: (context, videoTrack) =>
-                                CameraPreviewWidget(track: videoTrack),
+                                CameraPreviewWidgetCustom(track: videoTrack,
+                                emptyWidget: emptyWidget ?? Container(),
+                                backgroundColor: Colors.black,
+                                borderRadius: 12,
+                                ),
                           ),
                           Positioned(
                             bottom: 20,
