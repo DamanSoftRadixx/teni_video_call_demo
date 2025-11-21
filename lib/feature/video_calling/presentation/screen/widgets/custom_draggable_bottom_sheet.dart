@@ -87,28 +87,34 @@ class _CustomDraggableBottomSheetState
     // final double minChildSize = 210.h / screenHeight; // ~1 row visible
     double initialChildSize = minChildSize;
     final double mediumChildSize = 0.5; // 50% of screen
-    final double maxChildSize = 0.95; // 90% of screen
+    // final double maxChildSize = 0.95; // 90% of screen
+    final double fullMaxChildSize = 0.92;
+    final bool allowMedium = participantCount > 3; // from 3 items, allow medium
+    final bool allowMax = participantCount > 6; // from 7+ items, allow max
+
+    // Effective max size: if we don't allow max, cap at medium
+    final double maxChildSize = allowMax
+        ? fullMaxChildSize
+        : (allowMedium ? mediumChildSize : minChildSize);
+
+    // Decide which levels are allowed
 
     // Determine initial size based on participant count
-    if (participantCount < 4) {
-      initialChildSize = minChildSize;
-    } else if (participantCount < 7) {
-      initialChildSize = mediumChildSize;
-    } else {
-      initialChildSize = maxChildSize;
-    }
+    // Always start at minChildSize, users can scroll up to max allowed size
+    initialChildSize = minChildSize;
 
     // Build snapSizes in ascending order, ensuring uniqueness
     final snapSizes = <double>{
       minChildSize,
-      mediumChildSize,
-      maxChildSize,
+      if (allowMedium) mediumChildSize,
+      if (allowMax) maxChildSize,
     }.toList()..sort();
 
     return NotificationListener<DraggableScrollableNotification>(
       onNotification: (notification) {
         // Only unselect when reaching min extent (fully collapsed)
-        if (notification.extent <= mediumChildSize + 0.01) {
+        // if (notification.extent <= minChildSize + 0.02) {
+        if (notification.extent <= minChildSize + 0.005) {
           // Sheet has reached min size - clear all selections
           setState(() {
             if (useDummyData) {
@@ -248,27 +254,27 @@ class _CustomDraggableBottomSheetState
                                         ),
                                       ),
                                       // Close button
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: GestureDetector(
-                                          onTap: widget
-                                              .onDismiss, // Hide the overlay completely
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                              right: 16.w,
-                                            ),
-                                            child: Icon(
-                                              Icons.close,
-                                              color: Colors.white.withValues(
-                                                alpha: 0.7,
-                                              ),
-                                              size: 24.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                      // Positioned(
+                                      //   right: 0,
+                                      //   top: 0,
+                                      //   bottom: 0,
+                                      //   child: GestureDetector(
+                                      //     onTap: widget
+                                      //         .onDismiss, // Hide the overlay completely
+                                      //     child: Container(
+                                      //       padding: EdgeInsets.only(
+                                      //         right: 16.w,
+                                      //       ),
+                                      //       child: Icon(
+                                      //         Icons.close,
+                                      //         color: Colors.white.withValues(
+                                      //           alpha: 0.7,
+                                      //         ),
+                                      //         size: 24.sp,
+                                      //       ),
+                                      //     ),
+                                      //   ),
+                                      // ),
                                     ],
                                   ),
                                 ),
@@ -974,53 +980,89 @@ Widget participantVideoOrEmptyViewWidget({
   required ParticipantType participantType,
   required ParticipantMicStatus participantMicStatus,
   required ParticipantSelectionType participantSelectionType,
+  double? customTxtSize,
 }) {
-  String showName = isSelfView ? 'You' : name.substring(0, 1);
+  String showName = isSelfView
+      ? 'You'
+      : (name.length > 1)
+      ? name.substring(0, 1)
+      : '';
   print('isVideoVisible: $isVideoVisible');
-  if (isVideoVisible) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/png/dummy_ai_person_img.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
 
-  return Container(
-    width: double.infinity,
-    height: double.infinity,
-    decoration: BoxDecoration(
-      color: Colors.black,
-      borderRadius: BorderRadius.circular(10.r),
-    ),
-    child: Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          margin: EdgeInsets.all(20.w),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.2),
-            // borderRadius: BorderRadius.circular(100),
-          ),
-          child: Center(
-            child: Text(
-              showName,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
+  return MediaDeviceSelectButton(
+    builder: (context, roomCtx, deviceCtxs) {
+      if (isVideoVisible) {
+        return GestureDetector(
+          onDoubleTap: () {
+            String selectedDegiceId =
+                deviceCtxs.selectedVideoInputDeviceId ?? '';
+            List<MediaDevice>? deviceList = deviceCtxs.videoInputs ?? [];
+            if (selectedDegiceId.isEmpty && deviceList.isNotEmpty) {
+              deviceCtxs.selectVideoInput(deviceList.first);
+              print('selected device: ${deviceList.first.deviceId}');
+            } else if (selectedDegiceId.isNotEmpty && deviceList.length > 1) {
+              var oppositeDevice = deviceList.firstWhere(
+                (element) => element.deviceId != selectedDegiceId,
+              );
+              deviceCtxs.selectVideoInput(oppositeDevice);
+              print('selected device: ${oppositeDevice.deviceId}');
+            } else {
+              print('no device to select');
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/png/dummy_ai_person_img.png'),
+                fit: BoxFit.cover,
               ),
             ),
           ),
+        );
+      }
+
+      return GestureDetector(
+        onDoubleTap: () {
+          if (!deviceCtxs.cameraOpened) {
+            deviceCtxs.enableCamera();
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                margin: EdgeInsets.all(20.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.2),
+                  // borderRadius: BorderRadius.circular(100),
+                ),
+                child: Center(
+                  child: Text(
+                    showName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: (customTxtSize ?? 16).sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ],
-    ),
+      );
+    },
   );
 }
 

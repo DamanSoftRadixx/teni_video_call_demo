@@ -60,13 +60,16 @@ class CameraPreviewWidgetCustom extends StatelessWidget {
     required this.emptyWidget,
     required this.backgroundColor,
     required this.borderRadius,
+    required this.onDoubleTap,
   });
   final LocalVideoTrack? track;
+  final VoidCallback? onDoubleTap;
   final Widget emptyWidget;
   final Color backgroundColor;
   final double borderRadius;
   @override
   Widget build(BuildContext context) {
+  
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -75,7 +78,11 @@ class CameraPreviewWidgetCustom extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: track != null
-            ? VideoTrackRenderer(track!, fit: VideoViewFit.cover)
+            ? GestureDetector(
+      onDoubleTap: onDoubleTap,
+      behavior: HitTestBehavior.translucent,
+      child: VideoTrackRenderer(track!, fit: VideoViewFit.cover),
+    )
             : Center(child: emptyWidget),
       ),
     );

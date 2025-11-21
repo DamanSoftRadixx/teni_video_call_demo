@@ -23,11 +23,13 @@ import 'no_track_widget.dart';
 class VideoTrackWidget extends StatelessWidget {
   final sdk.VideoViewFit fit;
   final WidgetBuilder? noTrackBuilder;
+  final VoidCallback? onDoubleTap; // <-- add this
 
   const VideoTrackWidget({
     super.key,
     this.fit = sdk.VideoViewFit.contain,
     this.noTrackBuilder,
+    this.onDoubleTap,
   });
 
   Widget _buildNoTrack(BuildContext ctx) {
@@ -43,11 +45,11 @@ class VideoTrackWidget extends StatelessWidget {
     Debug.log('===>     VideoTrackWidget for $sid');
 
     if (trackCtx == null || trackCtx.videoTrack == null) {
-      return _buildNoTrack(context );
+      return _buildNoTrack(context);
       // return const NoTrackWidget();
     }
 
-    return Selector<TrackReferenceContext, bool>(
+    final content = Selector<TrackReferenceContext, bool>(
       selector: (ctx, isMuted) => trackCtx.isMuted,
       builder: (BuildContext ctx, isMuted, child) =>
           !isMuted && trackCtx.videoTrack != null
@@ -57,6 +59,18 @@ class VideoTrackWidget extends StatelessWidget {
                   fit: fit,
                 )
               : _buildNoTrack(ctx),
+    );
+    // return content;
+    return _wrapWithGesture(content);
+  }
+
+  /// Wrap child with GestureDetector only if onDoubleTap is provided
+  Widget _wrapWithGesture(Widget child) {
+    if (onDoubleTap == null) return child;
+    return GestureDetector(
+      onDoubleTap: onDoubleTap,
+      behavior: HitTestBehavior.translucent,
+      child: child,
     );
   }
 }

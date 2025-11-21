@@ -14,6 +14,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:livekit_client/livekit_client.dart';
 import 'package:livekit_components/livekit_components.dart';
 
 import 'package:provider/provider.dart';
@@ -26,6 +27,7 @@ import '../widgets/camera_preview.dart';
 import '../widgets/room/camera_select_button.dart';
 import '../widgets/room/join_button.dart';
 import '../widgets/room/microphone_select_button.dart';
+import '../builder/room/camera_switch.dart';
 
 class Prejoin extends StatelessWidget {
   Widget? customStartButton;
@@ -128,14 +130,74 @@ class Prejoin extends StatelessWidget {
                         alignment: Alignment.center,
                         fit: StackFit.expand,
                         children: [
-                          CameraPreview(
-                            builder: (context, videoTrack) =>
-                                CameraPreviewWidgetCustom(track: videoTrack,
+                          MediaDeviceSelectButton(
+                              builder: (context, roomCtx, deviceCtxs) {
+                            return CameraPreview(
+                              builder: (context, videoTrack) =>
+                                  CameraPreviewWidgetCustom(
+                                onDoubleTap: () async {
+                                  // deviceCtx.toggleCameraPosition();
+                                  // bool isCameraOn = deviceCtx.cameraOpened;
+                                  // if (isCameraOn) {
+                                  //   deviceCtx.disableCamera();
+                                  // } else {
+                                  //   deviceCtx.enableCamera();
+                                  // }
+                                  // print('onDoubleTap emptyWidget');
+                                  // deviceCtx.toggleCameraPosition();
+                                  // print(
+                                  //     'toggleCameraPosition: ${deviceCtx.currentPosition}');
+                                  // Only act when we actually have a preview track
+                                  // if (videoTrack == null || position == null) {
+                                  //   debugPrint(
+                                  //       'onDoubleTap: no preview track, showing emptyWidget');
+                                  //   return;
+                                  // }
+
+                                  // final newPosition =
+                                  //     position == CameraPosition.front
+                                  //         ? CameraPosition.back
+                                  //         : CameraPosition.front;
+
+                                  // await videoTrack
+                                  //     .setCameraPosition(newPosition);
+
+                                  // if (deviceCtxs.cameraOpened) {
+                                  //   deviceCtxs.enableCamera();
+                                  // } else {
+                                  //   deviceCtxs.disableCamera();
+                                  // }
+                                  String selectedDegiceId =
+                                      deviceCtxs.selectedVideoInputDeviceId ??
+                                          '';
+                                  List<MediaDevice>? deviceList =
+                                      deviceCtxs.videoInputs ?? [];
+                                  if (selectedDegiceId.isEmpty &&
+                                      deviceList.isNotEmpty) {
+                                    deviceCtxs
+                                        .selectVideoInput(deviceList.first);
+                                    print(
+                                        'selected device: ${deviceList.first.deviceId}');
+                                  } else if (selectedDegiceId.isNotEmpty &&
+                                      deviceList.length > 1) {
+                                    var oppositeDevice = deviceList.firstWhere(
+                                        (element) =>
+                                            element.deviceId !=
+                                            selectedDegiceId);
+                                    deviceCtxs.selectVideoInput(oppositeDevice);
+                                    print(
+                                        'selected device: ${oppositeDevice.deviceId}');
+                                  } else {
+                                    print('no device to select');
+                                  }
+                                },
+                                track: videoTrack,
                                 emptyWidget: emptyWidget ?? Container(),
                                 backgroundColor: Colors.black,
                                 borderRadius: 12,
-                                ),
-                          ),
+                              ),
+                            );
+                          }),
                           Positioned(
                             bottom: 20,
                             child: Container(

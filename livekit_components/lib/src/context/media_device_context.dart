@@ -66,7 +66,8 @@ class MediaDeviceContext extends ChangeNotifier {
 
   Future<void> loadDevices() async {
     _loadDevices(await Hardware.instance.enumerateDevices());
-    _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen(_loadDevices);
+    _deviceChangeSub =
+        Hardware.instance.onDeviceChange.stream.listen(_loadDevices);
   }
 
   _loadDevices(List<MediaDevice> devices) {
@@ -75,11 +76,14 @@ class MediaDeviceContext extends ChangeNotifier {
     _videoInputs = devices.where((d) => d.kind == 'videoinput').toList();
 
     selectedAudioInputDeviceId ??=
-        Hardware.instance.selectedAudioInput?.deviceId ?? _audioInputs?.firstOrNull?.deviceId;
+        Hardware.instance.selectedAudioInput?.deviceId ??
+            _audioInputs?.firstOrNull?.deviceId;
     selectedVideoInputDeviceId ??=
-        Hardware.instance.selectedVideoInput?.deviceId ?? _videoInputs?.firstOrNull?.deviceId;
+        Hardware.instance.selectedVideoInput?.deviceId ??
+            _videoInputs?.firstOrNull?.deviceId;
     selectedAudioOutputDeviceId ??=
-        Hardware.instance.selectedAudioOutput?.deviceId ?? _audioOutputs?.firstOrNull?.deviceId;
+        Hardware.instance.selectedAudioOutput?.deviceId ??
+            _audioOutputs?.firstOrNull?.deviceId;
     notifyListeners();
   }
 
@@ -185,7 +189,8 @@ class MediaDeviceContext extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get isScreenShareEnabled => _room?.localParticipant?.isScreenShareEnabled() ?? false;
+  bool get isScreenShareEnabled =>
+      _room?.localParticipant?.isScreenShareEnabled() ?? false;
 
   Future<void> enableScreenShare(context) async {
     if (lkPlatformIsDesktop()) {
@@ -227,16 +232,20 @@ class MediaDeviceContext extends ChangeNotifier {
               notificationTitle: 'Screen Sharing',
               notificationText: 'LiveKit Example is sharing the screen.',
               notificationImportance: AndroidNotificationImportance.normal,
-              notificationIcon: AndroidResource(name: 'livekit_ic_launcher', defType: 'mipmap'),
+              notificationIcon: AndroidResource(
+                  name: 'livekit_ic_launcher', defType: 'mipmap'),
             );
-            hasPermissions = await FlutterBackground.initialize(androidConfig: androidConfig);
+            hasPermissions = await FlutterBackground.initialize(
+                androidConfig: androidConfig);
           }
-          if (hasPermissions && !FlutterBackground.isBackgroundExecutionEnabled) {
+          if (hasPermissions &&
+              !FlutterBackground.isBackgroundExecutionEnabled) {
             await FlutterBackground.enableBackgroundExecution();
           }
         } catch (e) {
           if (!isRetry) {
-            return await Future<void>.delayed(const Duration(seconds: 1), () => requestBackgroundPermission(true));
+            return await Future<void>.delayed(const Duration(seconds: 1),
+                () => requestBackgroundPermission(true));
           }
           Debug.log('could not publish video: $e');
         }
@@ -256,11 +265,13 @@ class MediaDeviceContext extends ChangeNotifier {
     }
 
     if (lkPlatformIsWebMobile()) {
-      await context.showErrorDialog('Screen share is not supported on mobile web');
+      await context
+          .showErrorDialog('Screen share is not supported on mobile web');
       return;
     }
 
-    await _room?.localParticipant?.setScreenShareEnabled(true, captureScreenAudio: true);
+    await _room?.localParticipant
+        ?.setScreenShareEnabled(true, captureScreenAudio: true);
     notifyListeners();
   }
 
@@ -273,19 +284,23 @@ class MediaDeviceContext extends ChangeNotifier {
 
   bool? get isSpeakerOn => Hardware.instance.speakerOn;
 
-  void setSpeakerphoneOn(bool speakerOn, {bool forceSpeakerOutput = false}) async {
-    await Hardware.instance.setSpeakerphoneOn(speakerOn, forceSpeakerOutput: forceSpeakerOutput);
+  void setSpeakerphoneOn(bool speakerOn,
+      {bool forceSpeakerOutput = false}) async {
+    await Hardware.instance
+        .setSpeakerphoneOn(speakerOn, forceSpeakerOutput: forceSpeakerOutput);
     notifyListeners();
   }
 
   CameraPosition? get currentPosition {
-    final track = _room?.localParticipant?.videoTrackPublications.firstOrNull?.track;
+    final track =
+        _room?.localParticipant?.videoTrackPublications.firstOrNull?.track;
     if (track == null) return null;
     return (track.currentOptions as CameraCaptureOptions).cameraPosition;
   }
 
   void switchCameraPosition(CameraPosition newPosition) async {
-    final track = _room?.localParticipant?.videoTrackPublications.firstOrNull?.track;
+    final track =
+        _room?.localParticipant?.videoTrackPublications.firstOrNull?.track;
     if (track == null) return;
 
     try {
@@ -298,11 +313,16 @@ class MediaDeviceContext extends ChangeNotifier {
   }
 
   void toggleCameraPosition() async {
-    final track = _room?.localParticipant?.videoTrackPublications.firstOrNull?.track;
+    final track =
+        _room?.localParticipant?.videoTrackPublications.firstOrNull?.track;
+    print('toggleCameraPosition track: $track');
     if (track == null) return;
-    final currentPosition = (track.currentOptions as CameraCaptureOptions).cameraPosition;
+    final currentPosition =
+        (track.currentOptions as CameraCaptureOptions).cameraPosition;
 
-    final newPosition = currentPosition == CameraPosition.back ? CameraPosition.front : CameraPosition.back;
+    final newPosition = currentPosition == CameraPosition.back
+        ? CameraPosition.front
+        : CameraPosition.back;
 
     try {
       await track.setCameraPosition(newPosition);

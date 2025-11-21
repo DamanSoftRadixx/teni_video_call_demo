@@ -13,8 +13,6 @@ import 'package:teni_video_call_demo/feature/video_calling/domain/entities/video
 import 'package:livekit_components/livekit_components.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:responsive_builder/responsive_builder.dart';
-import 'package:teni_video_call_demo/feature/video_calling/presentation/screen/widgets/custom_draggable_bottom_sheet.dart';
-
 import '../../../video_calling/presentation/screen/widgets/custom_draggable_bottom_sheet.dart'
     show
         CustomDraggableBottomSheet,
@@ -22,6 +20,7 @@ import '../../../video_calling/presentation/screen/widgets/custom_draggable_bott
         ParticipantType,
         ParticipantMicStatus,
         ParticipantSelectionType;
+import 'package:livekit_components/src/ui/builder/room/camera_switch.dart';
 
 class VideoCallingScreen extends StatefulWidget {
   final VideoCallingParsingModel videoCallingParsingModel;
@@ -32,8 +31,12 @@ class VideoCallingScreen extends StatefulWidget {
 }
 
 class _VideoCallingScreenState extends State<VideoCallingScreen> {
+  /// Global variable to enable/disable auto-selecting first participant on join
+  static const bool enableAutoSelectFirstParticipant = true;
+
   bool showOverlay = true;
   String? selectedParticipantIdentity;
+  bool _hasAutoSelectedFirstParticipant = false;
 
   @override
   void initState() {
@@ -52,388 +55,480 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
     double veriticalPadding = 8.h;
     double betweenPaddingButtons = 14.w;
     double borderRadiusForPinnedVideoView = 10.r;
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildBackgroundImage(),
-          Container(
-            // decoration: BoxDecoration(color: Color(0xFF212121)),
-            child: BlocConsumer<VideoCallingBloc, VideoCallingState>(
-              listener: (BuildContext context, VideoCallingState state) {},
-              builder: (BuildContext context, VideoCallingState state) {
-                return LivekitRoom(
-                  roomContext: RoomContext(
-                    url: widget.videoCallingParsingModel.serverUrl,
-                    token: widget.videoCallingParsingModel.token,
-                    onConnected: () {
-                      if (kDebugMode) {
-                        print('LivekitRoom Connected to room');
-                      }
-                    },
-                    onDisconnected: () {
-                      if (kDebugMode) {
-                        print('LivekitRoom Disconnected from room');
-                      }
-                    },
-                    onError: (error) {
-                      print('LivekitRoom Error: $error');
-                      if (error?.message.contains('expired') ?? false) {
-                        print('LivekitRoom error?.message: contains expired');
-                        // Navigator.pushAndRemoveUntil(
-                        //   context,
-                        //   MaterialPageRoute(builder: (context) => LoginScreen()),
-                        //   (route) => false,
-                        // );
-                        context.goNamed(RouteNames.login);
-                      } else {
-                        print(
-                          'LivekitRoom rror?.message: does not contain expired',
-                        );
-                      }
-                    },
-                  ),
-                  builder: (context, roomCtx) {
-                    var deviceScreenType = getDeviceType(
-                      MediaQuery.of(context).size,
-                    );
-                    bool isConnected = roomCtx.connected;
-                    bool isConnecting = roomCtx.connecting;
-                    bool isNotConnected = !isConnected && !isConnecting;
-                    if (kDebugMode) {
-                      log('LivekitRoom isNotConnected: $isNotConnected ');
-                      log('LivekitRoom isConnected: $isConnected');
-                      log('LivekitRoom isConnecting: $isConnecting');
-                    }
-                    if (isNotConnected) {
-                      return Prejoin(
-                        emptyWidget: participantVideoOrEmptyViewWidget(
-                          name: widget.videoCallingParsingModel.participantName,
-                          isSelfView: false,
-                          isVideoVisible: false,
-                          participantType: ParticipantType.ai,
-                          participantMicStatus: ParticipantMicStatus.on,
-                          participantSelectionType:
-                              ParticipantSelectionType.none,
-                        ),
-                        horizontalScreenPadding: 16.w,
-                        verticalScreenPadding: 0.h,
-                        screenBorderRadius: borderRadiusForPinnedVideoView,
-                        iconSize: iconSizee,
-                        veriticalPadding: veriticalPadding,
-                        horizontalPadding: horizontalPadding,
-                        betweenPaddingButtons: betweenPaddingButtons,
-                        borderRadius: 50.r,
-                        token: widget.videoCallingParsingModel.token,
-                        url: widget.videoCallingParsingModel.serverUrl,
-                        onJoinPressed: (roomCtx, url, token) {
-                          roomCtx.connect(url: url, token: token);
-                        },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {},
+      child: Scaffold(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildBackgroundImage(),
+            Container(
+              // decoration: BoxDecoration(color: Color(0xFF212121)),
+              child: BlocConsumer<VideoCallingBloc, VideoCallingState>(
+                listener: (BuildContext context, VideoCallingState state) {},
+                builder: (BuildContext context, VideoCallingState state) {
+                  return LivekitRoom(
+                    roomContext: RoomContext(
+                      url: widget.videoCallingParsingModel.serverUrl,
+                      token: widget.videoCallingParsingModel.token,
+                      onConnected: () {
+                        if (kDebugMode) {
+                          print('LivekitRoom Connected to room');
+                        }
+                      },
+                      onDisconnected: () {
+                        if (kDebugMode) {
+                          print('LivekitRoom Disconnected from room');
+                        }
+                      },
+                      onError: (error) {
+                        print('LivekitRoom Error: $error');
+                        if (error?.message.contains('expired') ?? false) {
+                          print('LivekitRoom error?.message: contains expired');
+                          // Navigator.pushAndRemoveUntil(
+                          //   context,
+                          //   MaterialPageRoute(builder: (context) => LoginScreen()),
+                          //   (route) => false,
+                          // );
+                          context.goNamed(RouteNames.login);
+                        } else {
+                          print(
+                            'LivekitRoom rror?.message: does not contain expired',
+                          );
+                        }
+                      },
+                    ),
+                    builder: (context, roomCtx) {
+                      var deviceScreenType = getDeviceType(
+                        MediaQuery.of(context).size,
                       );
-                    } else if (isConnected) {
-                      return Stack(
-                        children: [
-                          SafeArea(
-                            child: Stack(
-                              children: [
-                                Row(
-                                  children: [
-                                    /// show chat widget on mobile
-                                    (deviceScreenType ==
-                                                DeviceScreenType.mobile &&
-                                            roomCtx.isChatEnabled)
-                                        ? Expanded(
-                                            child: SafeArea(
-                                              bottom: true,
-                                              top: true,
-                                              child: ChatBuilder(
-                                                builder:
-                                                    (
-                                                      context,
-                                                      enabled,
-                                                      chatCtx,
-                                                      messages,
-                                                    ) {
-                                                      return ChatWidget(
-                                                        messages: messages,
-                                                        onSend: (message) =>
-                                                            chatCtx.sendMessage(
-                                                              message,
-                                                            ),
-                                                        onClose: () {
-                                                          chatCtx.toggleChat(
-                                                            false,
-                                                          );
-                                                        },
-                                                      );
-                                                    },
-                                              ),
-                                            ),
-                                          )
-                                        : Expanded(
-                                            child: Column(
-                                              children: [
-                                                SizedBox(
-                                                  height:
-                                                      MediaQuery.of(
+                      bool isConnected = roomCtx.connected;
+                      bool isConnecting = roomCtx.connecting;
+                      bool isNotConnected = !isConnected && !isConnecting;
+                      if (kDebugMode) {
+                        log('LivekitRoom isNotConnected: $isNotConnected ');
+                        log('LivekitRoom isConnected: $isConnected');
+                        log('LivekitRoom isConnecting: $isConnecting');
+                      }
+                      if (isNotConnected) {
+                        String userName =
+                            widget.videoCallingParsingModel.participantName;
+                        if (selectedParticipantIdentity != null) {
+                          userName = _getUserName(
+                            roomCtx,
+                            selectedParticipantIdentity!,
+                          );
+                        }
+                        if (userName.isEmpty) {
+                          userName =
+                              widget.videoCallingParsingModel.participantName;
+                        }
+                        return Prejoin(
+                          emptyWidget: participantVideoOrEmptyViewWidget(
+                            customTxtSize: 22.sp,
+                            name: userName,
+                            isSelfView: false,
+                            isVideoVisible: false,
+                            participantType: ParticipantType.ai,
+                            participantMicStatus: ParticipantMicStatus.on,
+                            participantSelectionType:
+                                ParticipantSelectionType.none,
+                          ),
+                          horizontalScreenPadding: 16.w,
+                          verticalScreenPadding: 0.h,
+                          screenBorderRadius: borderRadiusForPinnedVideoView,
+                          iconSize: iconSizee,
+                          veriticalPadding: veriticalPadding,
+                          horizontalPadding: horizontalPadding,
+                          betweenPaddingButtons: betweenPaddingButtons,
+                          borderRadius: 50.r,
+                          token: widget.videoCallingParsingModel.token,
+                          url: widget.videoCallingParsingModel.serverUrl,
+                          onJoinPressed: (roomCtx, url, token) {
+                            roomCtx.connect(url: url, token: token);
+                          },
+                        );
+                      } else if (isConnected) {
+                        // Auto-select first participant on initial connection
+                        if (enableAutoSelectFirstParticipant &&
+                            !_hasAutoSelectedFirstParticipant &&
+                            roomCtx.participants.isNotEmpty) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!_hasAutoSelectedFirstParticipant && mounted) {
+                              _autoSelectFirstParticipant(roomCtx);
+                            }
+                          });
+                        }
+
+                        return Stack(
+                          children: [
+                            SafeArea(
+                              child: Stack(
+                                children: [
+                                  Row(
+                                    children: [
+                                      /// show chat widget on mobile
+                                      (deviceScreenType ==
+                                                  DeviceScreenType.mobile &&
+                                              roomCtx.isChatEnabled)
+                                          ? Expanded(
+                                              child: SafeArea(
+                                                bottom: true,
+                                                top: true,
+                                                child: ChatBuilder(
+                                                  builder:
+                                                      (
                                                         context,
-                                                      ).size.height *
-                                                      0.65,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            borderRadiusForPinnedVideoView,
+                                                        enabled,
+                                                        chatCtx,
+                                                        messages,
+                                                      ) {
+                                                        return ChatWidget(
+                                                          messages: messages,
+                                                          onSend: (message) =>
+                                                              chatCtx
+                                                                  .sendMessage(
+                                                                    message,
+                                                                  ),
+                                                          onClose: () {
+                                                            chatCtx.toggleChat(
+                                                              false,
+                                                            );
+                                                          },
+                                                        );
+                                                      },
+                                                ),
+                                              ),
+                                            )
+                                          : Expanded(
+                                              child: Column(
+                                                children: [
+                                                  SizedBox(
+                                                    height:
+                                                        MediaQuery.of(
+                                                          context,
+                                                        ).size.height *
+                                                        0.65,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.black,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              borderRadiusForPinnedVideoView,
+                                                            ),
+                                                      ),
+                                                      margin:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 14.w,
                                                           ),
-                                                    ),
-                                                    margin:
-                                                        EdgeInsets.symmetric(
-                                                          horizontal: 14.w,
-                                                        ),
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            borderRadiusForPinnedVideoView,
-                                                          ),
-                                                      child: Stack(
-                                                        children: <Widget>[
-                                                          /// show participant loop
-                                                          ParticipantLoop(
-                                                            showAudioTracks:
-                                                                false,
-                                                            showVideoTracks:
-                                                                true,
-                                                            showParticipantPlaceholder:
-                                                                true,
-                                                            showParticipantList:
-                                                                false,
-                                                            // showParticipantList: !showOverlay,
+                                                      child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              borderRadiusForPinnedVideoView,
+                                                            ),
+                                                        child: Stack(
+                                                          children: <Widget>[
+                                                            /// show participant loop
+                                                            ParticipantLoop(
+                                                              showAudioTracks:
+                                                                  false,
+                                                              showVideoTracks:
+                                                                  true,
+                                                              showParticipantPlaceholder:
+                                                                  true,
+                                                              showParticipantList:
+                                                                  false,
+                                                              // showParticipantList: !showOverlay,
 
-                                                            /// layout builder
-                                                            layoutBuilder:
-                                                                roomCtx
-                                                                    .pinnedTracks
-                                                                    .isNotEmpty
-                                                                ? const CarouselLayoutBuilder()
-                                                                : const GridLayoutBuilder(),
+                                                              /// layout builder
+                                                              layoutBuilder:
+                                                                  roomCtx
+                                                                      .pinnedTracks
+                                                                      .isNotEmpty
+                                                                  ? const CarouselLayoutBuilder()
+                                                                  : const GridLayoutBuilder(),
 
-                                                            /// participant builder
-                                                            participantTrackBuilder: (context, identifier) {
-                                                              String userName =
-                                                                  (identifier
-                                                                      .participant
-                                                                      .name
-                                                                      .trim()
-                                                                      .isEmpty)
-                                                                  ? identifier
-                                                                        .participant
-                                                                        .identity
-                                                                        .trim()
-                                                                  : identifier
-                                                                        .participant
-                                                                        .name
-                                                                        .trim();
+                                                              /// participant builder
+                                                              participantTrackBuilder:
+                                                                  (
+                                                                    context,
+                                                                    identifier,
+                                                                  ) {
+                                                                    final isLocalParticipant =
+                                                                        identifier
+                                                                            .participant
+                                                                            .identity ==
+                                                                        roomCtx
+                                                                            .localParticipant
+                                                                            ?.identity;
 
-                                                              // build participant widget for each Track
-                                                              return Stack(
-                                                                children: [
-                                                                  /// video track widget in the background
-                                                                  identifier.isAudio &&
-                                                                          roomCtx
-                                                                              .enableAudioVisulizer
-                                                                      ? const AudioVisualizerWidget(
-                                                                          backgroundColor:
-                                                                              LKColors.lkDarkBlue,
-                                                                        )
-                                                                      : IsSpeakingIndicator(
-                                                                          builder:
-                                                                              (
-                                                                                context,
-                                                                                isSpeaking,
-                                                                              ) {
-                                                                                return isSpeaking !=
-                                                                                        null
-                                                                                    ? IsSpeakingIndicatorWidget(
-                                                                                        borderGradient: LinearGradient(
-                                                                                          colors: [
-                                                                                            Color(
-                                                                                              0xFF7B9AFF,
-                                                                                            ),
-                                                                                            Color(
-                                                                                              0xFF7B9AFF,
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                        borderWidth: 3.w,
-                                                                                        borderRadius: 10.r,
-                                                                                        isSpeaking: isSpeaking,
-                                                                                        child: VideoTrackWidget(
-                                                                                          fit: VideoViewFit.cover,
-                                                                                          noTrackBuilder:
-                                                                                              (
-                                                                                                context,
-                                                                                              ) {
-                                                                                                return participantVideoOrEmptyViewWidget(
-                                                                                                  name: userName,
-                                                                                                  isSelfView: false,
-                                                                                                  isVideoVisible: false,
-                                                                                                  participantType: ParticipantType.ai,
-                                                                                                  participantMicStatus: ParticipantMicStatus.on,
-                                                                                                  participantSelectionType: ParticipantSelectionType.none,
-                                                                                                );
-                                                                                              },
-                                                                                        ),
-                                                                                      )
-                                                                                    : VideoTrackWidget(
-                                                                                        noTrackBuilder:
+                                                                    String
+                                                                    userName = _getUserName(
+                                                                      roomCtx,
+                                                                      identifier
+                                                                          .participant
+                                                                          .identity,
+                                                                    );
+                                                                    // (identifier
+                                                                    //     .participant
+                                                                    //     .name
+                                                                    //     .trim()
+                                                                    //     .isEmpty)
+                                                                    // ? identifier
+                                                                    //       .participant
+                                                                    //       .identity
+                                                                    //       .trim()
+                                                                    // : identifier
+                                                                    //       .participant
+                                                                    //       .name
+                                                                    //       .trim();
+
+                                                                    // build participant widget for each Track
+                                                                    return Stack(
+                                                                      children: [
+                                                                        /// video track widget in the background
+                                                                        identifier.isAudio &&
+                                                                                roomCtx.enableAudioVisulizer
+                                                                            ? const AudioVisualizerWidget(
+                                                                                backgroundColor: LKColors.lkDarkBlue,
+                                                                              )
+                                                                            : IsSpeakingIndicator(
+                                                                                builder:
+                                                                                    (
+                                                                                      context,
+                                                                                      isSpeaking,
+                                                                                    ) {
+                                                                                      return CameraSwitch(
+                                                                                        builder:
                                                                                             (
                                                                                               context,
+                                                                                              roomCtx2,
+                                                                                              deviceCtx,
+                                                                                              position,
                                                                                             ) {
-                                                                                              return participantVideoOrEmptyViewWidget(
-                                                                                                name: userName,
-                                                                                                isSelfView: false,
-                                                                                                isVideoVisible: false,
-                                                                                                participantType: ParticipantType.ai,
-                                                                                                participantMicStatus: ParticipantMicStatus.on,
-                                                                                                participantSelectionType: ParticipantSelectionType.none,
-                                                                                              );
+                                                                                              return isSpeaking !=
+                                                                                                      null
+                                                                                                  ? IsSpeakingIndicatorWidget(
+                                                                                                      borderGradient: LinearGradient(
+                                                                                                        colors: [
+                                                                                                          Color(
+                                                                                                            0xFF7B9AFF,
+                                                                                                          ),
+                                                                                                          Color(
+                                                                                                            0xFF7B9AFF,
+                                                                                                          ),
+                                                                                                        ],
+                                                                                                      ),
+                                                                                                      borderWidth: 3.w,
+                                                                                                      borderRadius: 10.r,
+                                                                                                      isSpeaking: isSpeaking,
+                                                                                                      child: VideoTrackWidget(
+                                                                                                        onDoubleTap: () {
+                                                                                                          log(
+                                                                                                            'onDoubleTap video camera switch',
+                                                                                                          );
+                                                                                                          if (isLocalParticipant) {
+                                                                                                            // Same logic as CameraSwitchButton
+                                                                                                            final newPosition =
+                                                                                                                (position ==
+                                                                                                                    CameraPosition.front)
+                                                                                                                ? CameraPosition.back
+                                                                                                                : CameraPosition.front;
+                                                                                                            deviceCtx.switchCameraPosition(
+                                                                                                              newPosition,
+                                                                                                            );
+                                                                                                          }
+                                                                                                        },
+                                                                                                        fit: VideoViewFit.cover,
+                                                                                                        noTrackBuilder:
+                                                                                                            (
+                                                                                                              context,
+                                                                                                            ) {
+                                                                                                              return participantVideoOrEmptyViewWidget(
+                                                                                                                customTxtSize: 22.sp,
+                                                                                                                name: userName,
+                                                                                                                isSelfView: false,
+                                                                                                                isVideoVisible: false,
+                                                                                                                participantType: ParticipantType.ai,
+                                                                                                                participantMicStatus: ParticipantMicStatus.on,
+                                                                                                                participantSelectionType: ParticipantSelectionType.none,
+                                                                                                              );
+                                                                                                            },
+                                                                                                      ),
+                                                                                                    )
+                                                                                                  : VideoTrackWidget(
+                                                                                                      onDoubleTap: () {
+                                                                                                        log(
+                                                                                                          'onDoubleTap video camera switch',
+                                                                                                        );
+                                                                                                        if (isLocalParticipant) {
+                                                                                                          // Same logic as CameraSwitchButton
+                                                                                                          final newPosition =
+                                                                                                              (position ==
+                                                                                                                  CameraPosition.front)
+                                                                                                              ? CameraPosition.back
+                                                                                                              : CameraPosition.front;
+                                                                                                          deviceCtx.switchCameraPosition(
+                                                                                                            newPosition,
+                                                                                                          );
+                                                                                                        }
+                                                                                                      },
+                                                                                                      noTrackBuilder:
+                                                                                                          (
+                                                                                                            context,
+                                                                                                          ) {
+                                                                                                            return participantVideoOrEmptyViewWidget(
+                                                                                                              customTxtSize: 22.sp,
+                                                                                                              name: userName,
+                                                                                                              isSelfView: false,
+                                                                                                              isVideoVisible: false,
+                                                                                                              participantType: ParticipantType.ai,
+                                                                                                              participantMicStatus: ParticipantMicStatus.on,
+                                                                                                              participantSelectionType: ParticipantSelectionType.none,
+                                                                                                            );
+                                                                                                          },
+                                                                                                    );
                                                                                             },
                                                                                       );
-                                                                              },
+                                                                                    },
+                                                                              ),
+
+                                                                        /// focus toggle button at the top right , to show in big view
+                                                                        // const Positioned(
+                                                                        //   top: 0,
+                                                                        //   right: 0,
+                                                                        //   child:
+                                                                        //       FocusToggle(),
+                                                                        // ),
+
+                                                                        /// track stats at the top left
+                                                                        const Positioned(
+                                                                          top:
+                                                                              8,
+                                                                          left:
+                                                                              0,
+                                                                          child:
+                                                                              TrackStatsWidget(),
                                                                         ),
 
-                                                                  /// focus toggle button at the top right , to show in big view
-                                                                  // const Positioned(
-                                                                  //   top: 0,
-                                                                  //   right: 0,
-                                                                  //   child:
-                                                                  //       FocusToggle(),
-                                                                  // ),
+                                                                        /// status bar at the bottom
+                                                                        // const Positioned(
+                                                                        //   bottom: 0,
+                                                                        //   left: 0,
+                                                                        //   right: 0,
+                                                                        //   child:
+                                                                        //       ParticipantStatusBar(),
+                                                                        // ),
+                                                                        Positioned(
+                                                                          bottom:
+                                                                              8.w,
+                                                                          left:
+                                                                              8.w,
+                                                                          child: _showUserNameWidget(
+                                                                            name:
+                                                                                userName,
+                                                                            isSelfView:
+                                                                                false,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    );
+                                                                  },
+                                                            ),
 
-                                                                  /// track stats at the top left
-                                                                  const Positioned(
-                                                                    top: 8,
-                                                                    left: 0,
-                                                                    child:
-                                                                        TrackStatsWidget(),
-                                                                  ),
-
-                                                                  /// status bar at the bottom
-                                                                  // const Positioned(
-                                                                  //   bottom: 0,
-                                                                  //   left: 0,
-                                                                  //   right: 0,
-                                                                  //   child:
-                                                                  //       ParticipantStatusBar(),
-                                                                  // ),
-                                                                  Positioned(
-                                                                    bottom: 8.w,
-                                                                    left: 8.w,
-                                                                    child: _showUserNameWidget(
-                                                                      name:
-                                                                          userName,
-                                                                      isSelfView:
-                                                                          false,
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              );
-                                                            },
-                                                          ),
-
-                                                          /// show control bar at the bottom
-                                                          // Positioned(
-                                                          //   bottom: 10.h,
-                                                          //   left: 0,
-                                                          //   right: 0,
-                                                          //   child: SafeArea(
-                                                          //     bottom: true,
-                                                          //     child: ControlBar(
-                                                          //       microphone: true,
-                                                          //       onHandRaseTap: () {
-                                                          //         log(
-                                                          //           'onHandRaseTap',
-                                                          //         );
-                                                          //       },
-                                                          //       onShareTap: () {
-                                                          //         log('onShareTap');
-                                                          //       },
-                                                          //       iconSize: iconSizee,
-                                                          //       horizontalPadding:
-                                                          //           horizontalPadding,
-                                                          //       veriticalPadding:
-                                                          //           veriticalPadding,
-                                                          //     ),
-                                                          //   ),
-                                                          // ),
-                                                        ],
+                                                            /// show control bar at the bottom
+                                                            // Positioned(
+                                                            //   bottom: 10.h,
+                                                            //   left: 0,
+                                                            //   right: 0,
+                                                            //   child: SafeArea(
+                                                            //     bottom: true,
+                                                            //     child: ControlBar(
+                                                            //       microphone: true,
+                                                            //       onHandRaseTap: () {
+                                                            //         log(
+                                                            //           'onHandRaseTap',
+                                                            //         );
+                                                            //       },
+                                                            //       onShareTap: () {
+                                                            //         log('onShareTap');
+                                                            //       },
+                                                            //       iconSize: iconSizee,
+                                                            //       horizontalPadding:
+                                                            //           horizontalPadding,
+                                                            //       veriticalPadding:
+                                                            //           veriticalPadding,
+                                                            //     ),
+                                                            //   ),
+                                                            // ),
+                                                          ],
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                                Expanded(
-                                                  child: SizedBox.shrink(),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-
-                                    /// show chat widget on desktop
-                                    (deviceScreenType !=
-                                                DeviceScreenType.mobile &&
-                                            roomCtx.isChatEnabled)
-                                        ? Expanded(
-                                            flex: 2,
-                                            child: SizedBox(
-                                              width: 400,
-                                              child: ChatBuilder(
-                                                builder:
-                                                    (
-                                                      context,
-                                                      enabled,
-                                                      chatCtx,
-                                                      messages,
-                                                    ) {
-                                                      return ChatWidget(
-                                                        messages: messages,
-                                                        onSend: (message) =>
-                                                            chatCtx.sendMessage(
-                                                              message,
-                                                            ),
-                                                        onClose: () {
-                                                          chatCtx.toggleChat(
-                                                            false,
-                                                          );
-                                                        },
-                                                      );
-                                                    },
+                                                  Expanded(
+                                                    child: SizedBox.shrink(),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          )
-                                        : const SizedBox(width: 0, height: 0),
-                                  ],
-                                ),
 
-                                /// show toast widget
-                                const Positioned(
-                                  top: 30,
-                                  left: 0,
-                                  right: 0,
-                                  child: ToastWidget(),
-                                ),
-                              ],
+                                      /// show chat widget on desktop
+                                      (deviceScreenType !=
+                                                  DeviceScreenType.mobile &&
+                                              roomCtx.isChatEnabled)
+                                          ? Expanded(
+                                              flex: 2,
+                                              child: SizedBox(
+                                                width: 400,
+                                                child: ChatBuilder(
+                                                  builder:
+                                                      (
+                                                        context,
+                                                        enabled,
+                                                        chatCtx,
+                                                        messages,
+                                                      ) {
+                                                        return ChatWidget(
+                                                          messages: messages,
+                                                          onSend: (message) =>
+                                                              chatCtx
+                                                                  .sendMessage(
+                                                                    message,
+                                                                  ),
+                                                          onClose: () {
+                                                            chatCtx.toggleChat(
+                                                              false,
+                                                            );
+                                                          },
+                                                        );
+                                                      },
+                                                ),
+                                              ),
+                                            )
+                                          : const SizedBox(width: 0, height: 0),
+                                    ],
+                                  ),
+
+                                  /// show toast widget
+                                  const Positioned(
+                                    top: 30,
+                                    left: 0,
+                                    right: 0,
+                                    child: ToastWidget(),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
 
-                          if (showOverlay)
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              top:
-                                  0, // Add top constraint to provide bounded height
-                              bottom: 0,
-                              child: Container(
+                            if (showOverlay)
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                top:
+                                    0, // Add top constraint to provide bounded height
+                                bottom: 0,
                                 child: CustomDraggableBottomSheet(
                                   onDismiss: hideOverlay,
                                   liveParticipants: roomCtx.participants,
@@ -519,22 +614,22 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
-                      );
-                    } else {
-                      return Center(
-                        child: Column(
-                          children: [Center(child: Text('Video Calling'))],
-                        ),
-                      );
-                    }
-                  },
-                );
-              },
+                          ],
+                        );
+                      } else {
+                        return Center(
+                          child: Column(
+                            children: [Center(child: Text('Video Calling'))],
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -589,6 +684,53 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
       }
     }
     return null;
+  }
+
+  /// Auto-select the first participant in the list when joining the room
+  void _autoSelectFirstParticipant(RoomContext roomCtx) {
+    if (_hasAutoSelectedFirstParticipant || roomCtx.participants.isEmpty) {
+      return;
+    }
+
+    final firstParticipant = roomCtx.participants.first;
+    final videoPublication = _findVideoPublication(firstParticipant);
+
+    // Use participant identity as fallback if no video track
+    final trackId = videoPublication?.sid ?? firstParticipant.identity;
+
+    // Pin the first participant
+    roomCtx.pinningTrack(trackId);
+
+    setState(() {
+      selectedParticipantIdentity = firstParticipant.identity;
+      _hasAutoSelectedFirstParticipant = true;
+    });
+
+    if (kDebugMode) {
+      if (videoPublication == null) {
+        log(
+          'Auto-selected first participant without video: ${firstParticipant.name} '
+          '(${firstParticipant.identity})',
+        );
+      } else {
+        log(
+          'Auto-selected first participant: ${firstParticipant.name} '
+          '(${firstParticipant.identity}) -> ${videoPublication.sid}',
+        );
+      }
+    }
+  }
+
+  String _getUserName(RoomContext roomCtx, String identity) {
+    String userName = '';
+    for (final participant in roomCtx.participants) {
+      if (participant.identity == identity) {
+        return (participant.name).isEmpty
+            ? participant.identity
+            : participant.name;
+      }
+    }
+    return userName.trim();
   }
 
   void hideOverlay() {

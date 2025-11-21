@@ -55,17 +55,19 @@ class CommonImageLoader extends StatelessWidget {
     Widget imageWidget;
     switch (asset.type) {
       case CommonImageType.png:
-        imageWidget = Image.asset(
-          asset.path,
-          width: width,
-          height: height,
-          color: color,
-          fit: fit,
-          errorBuilder: (context, error, stackTrace) {
-            print('==========error: $error');
-            return _placeholderWidget();
-          },
-        );
+        imageWidget = asset.path.isNotEmpty
+            ? Image.asset(
+                asset.path,
+                width: width,
+                height: height,
+                color: color,
+                fit: fit,
+                errorBuilder: (context, error, stackTrace) {
+                  print('==========error: $error');
+                  return _placeholderWidget();
+                },
+              )
+            : _placeholderWidget();
         break;
       case CommonImageType.svg:
         imageWidget = asset.path.isNotEmpty

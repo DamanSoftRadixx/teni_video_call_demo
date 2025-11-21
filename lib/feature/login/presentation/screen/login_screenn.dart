@@ -275,16 +275,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
 
             // Draggable overlay (non-modal, clickable background)
-            // if (_showOverlay)
-            //   Positioned(
-            //     left: 0,
-            //     right: 0,
-            //     top: 0, // Add top constraint to provide bounded height
-            //     bottom: 0,
-            //     child: Container(
-            //       child: CustomDraggableBottomSheet(onDismiss: hideOverlay),
-            //     ),
-            //   ),
+            if (_showOverlay)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0, // Add top constraint to provide bounded height
+                bottom: 0,
+                child: Container(
+                  child: CustomDraggableBottomSheet(onDismiss: hideOverlay),
+                ),
+              ),
           ],
         ),
       ),
@@ -326,10 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             // Logo
             CommonImageLoader(
-              asset: CommonImageAsset(
-                path: ImageResource.splashOverLayBlueYellow,
-                type: CommonImageType.png,
-              ),
+              asset: CommonImageAsset(path: '', type: CommonImageType.png),
               width: 100,
               height: 100,
               fit: BoxFit.contain,
@@ -454,10 +451,7 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         // Logo
         CommonImageLoader(
-          asset: CommonImageAsset(
-            path: ImageResource.splashOverLayBlueYellow,
-            type: CommonImageType.png,
-          ),
+          asset: CommonImageAsset(path: '', type: CommonImageType.png),
           width: 100,
           height: 100,
           fit: BoxFit.contain,
@@ -576,15 +570,15 @@ class _CustomDraggableBottomSheetState
       imageUrl: 'assets/avatar4.png',
       participantMicStatus: ParticipantMicStatus.rasiedHandView,
     ),
-    ParticipantData(name: 'Monty Rawat ', imageUrl: 'assets/avatar5.png'),
-    ParticipantData(name: 'Joker Singh', imageUrl: 'assets/avatar6.png'),
-    ParticipantData(name: 'Iron man  ', imageUrl: 'assets/avatar7.png'),
-    ParticipantData(
-      name: 'Tonny Jerrry',
-      imageUrl: 'assets/avatar8.png',
-      participantMicStatus: ParticipantMicStatus.rasiedHandView,
-    ),
-    ParticipantData(name: 'Alex Xel', imageUrl: 'assets/avatar9.png'),
+    // ParticipantData(name: 'Monty Rawat ', imageUrl: 'assets/avatar5.png'),
+    // ParticipantData(name: 'Joker Singh', imageUrl: 'assets/avatar6.png'),
+    // ParticipantData(name: 'Iron man  ', imageUrl: 'assets/avatar7.png'),
+    // ParticipantData(
+    //   name: 'Tonny Jerrry',
+    //   imageUrl: 'assets/avatar8.png',
+    //   participantMicStatus: ParticipantMicStatus.rasiedHandView,
+    // ),
+    // ParticipantData(name: 'Alex Xel', imageUrl: 'assets/avatar9.png'),
   ];
 
   ParticipantData? selectedParticipant;
