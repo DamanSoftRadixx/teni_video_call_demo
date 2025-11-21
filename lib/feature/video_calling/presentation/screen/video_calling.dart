@@ -55,6 +55,11 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
     double veriticalPadding = 8.h;
     double betweenPaddingButtons = 14.w;
     double borderRadiusForPinnedVideoView = 10.r;
+    LinearGradient selctedBorderGradient = LinearGradient(
+      colors: [Color(0xFF7B9AFF), Color(0xFF7B9AFF)],
+    );
+    double selectedBorderWidth = 3.w;
+    double selectedBorderRadius = 10.r;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {},
@@ -100,6 +105,9 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                       },
                     ),
                     builder: (context, roomCtx) {
+                      print(
+                        'roomCtx.localParticipant?.isSpeaking: ${roomCtx.localParticipant?.isSpeaking}',
+                      );
                       var deviceScreenType = getDeviceType(
                         MediaQuery.of(context).size,
                       );
@@ -310,18 +318,9 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                                                                               return isSpeaking !=
                                                                                                       null
                                                                                                   ? IsSpeakingIndicatorWidget(
-                                                                                                      borderGradient: LinearGradient(
-                                                                                                        colors: [
-                                                                                                          Color(
-                                                                                                            0xFF7B9AFF,
-                                                                                                          ),
-                                                                                                          Color(
-                                                                                                            0xFF7B9AFF,
-                                                                                                          ),
-                                                                                                        ],
-                                                                                                      ),
-                                                                                                      borderWidth: 3.w,
-                                                                                                      borderRadius: 10.r,
+                                                                                                      borderGradient: selctedBorderGradient,
+                                                                                                      borderWidth: selectedBorderWidth,
+                                                                                                      borderRadius: selectedBorderRadius,
                                                                                                       isSpeaking: isSpeaking,
                                                                                                       child: VideoTrackWidget(
                                                                                                         onDoubleTap: () {
@@ -346,6 +345,11 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                                                                                               context,
                                                                                                             ) {
                                                                                                               return participantVideoOrEmptyViewWidget(
+                                                                                                                borderGradient: selctedBorderGradient,
+                                                                                                                borderWidth: selectedBorderWidth,
+                                                                                                                borderRadius: selectedBorderRadius,
+                                                                                                                needToShowSelectedBorder: true,
+                                                                                                                borderColor: Colors.white,
                                                                                                                 customTxtSize: 22.sp,
                                                                                                                 name: userName,
                                                                                                                 isSelfView: false,
@@ -379,6 +383,9 @@ class _VideoCallingScreenState extends State<VideoCallingScreen> {
                                                                                                             context,
                                                                                                           ) {
                                                                                                             return participantVideoOrEmptyViewWidget(
+                                                                                                              borderGradient: selctedBorderGradient,
+                                                                                                              borderWidth: selectedBorderWidth,
+                                                                                                              borderRadius: selectedBorderRadius,
                                                                                                               customTxtSize: 22.sp,
                                                                                                               name: userName,
                                                                                                               isSelfView: false,

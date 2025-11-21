@@ -68,17 +68,15 @@ class IsSpeakingIndicatorWidget extends StatelessWidget {
         color: borderGradient != null ? borderColor : null,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: Padding(
-        padding: EdgeInsets.all(!isSpeaking ? 0 : borderWidth),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(borderRadius),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(borderRadius),
-            child: child,
-          ),
+      padding: EdgeInsets.all(!isSpeaking ? 0 : borderWidth),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: child,
         ),
       ),
     );

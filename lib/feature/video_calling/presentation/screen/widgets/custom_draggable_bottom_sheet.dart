@@ -112,21 +112,8 @@ class _CustomDraggableBottomSheetState
 
     return NotificationListener<DraggableScrollableNotification>(
       onNotification: (notification) {
-        // Only unselect when reaching min extent (fully collapsed)
-        // if (notification.extent <= minChildSize + 0.02) {
-        if (notification.extent <= minChildSize + 0.005) {
-          // Sheet has reached min size - clear all selections
-          setState(() {
-            if (useDummyData) {
-              for (var participant in dummyParticipants) {
-                participant.participantSelectionType =
-                    ParticipantSelectionType.none;
-              }
-            } else {
-              selectedParticipantIdentity = null;
-            }
-          });
-        }
+        // Keep selection persistent - don't auto-clear when reaching min size
+        // This allows the selected participant to remain highlighted
         return false;
       },
       child: DraggableScrollableSheet(
@@ -148,6 +135,10 @@ class _CustomDraggableBottomSheetState
               isMyParitpicantType == ParticipantType.guest
               ? 'assets/svg/hand_rase_ic.svg'
               : 'assets/svg/mic_off_ic.svg';
+
+          //         final participantCount = useDummyData
+          // ? dummyParticipants.length
+          // : participants.length;
           // Using state variable selectedParticipant instead of local variable
 
           return Container(
@@ -457,6 +448,7 @@ class _CustomDraggableBottomSheetState
 
         // Convert live participant to ParticipantData for display
         final participantData = ParticipantData(
+          isUserSpeaking: liveParticipant.isSpeaking,
           name: liveParticipant.name.isNotEmpty
               ? liveParticipant.name
               : liveParticipant.identity,
@@ -474,6 +466,8 @@ class _CustomDraggableBottomSheetState
         );
 
         return ParticipantTile(
+          isUserSpeacking: false,
+          isRealData: true,
           isVideoVisible: hasVideo,
           participant: participantData,
           onHandRaseMicIconClicked: () {
@@ -498,12 +492,14 @@ class _CustomDraggableBottomSheetState
             });
             widget.onParticipantSelected?.call(liveParticipant);
             // Expand to max size when item is selected
-            _sheetController.animateTo(
-              // maxChildSize,
-              minChildSize,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
+            if (participants.length > 6) {
+              _sheetController.animateTo(
+                // maxChildSize,
+                minChildSize,
+                duration: Duration(milliseconds: 450),
+                curve: Curves.easeOut,
+              );
+            }
             print(
               'Item: onItemClicked - ${liveParticipant.name} (${liveParticipant.identity})',
             );
@@ -628,11 +624,13 @@ class ParticipantData {
   ParticipantType participantType;
   ParticipantMicStatus participantMicStatus;
   ParticipantSelectionType participantSelectionType;
+  bool isUserSpeaking;
 
   ParticipantData({
     required this.name,
     required this.imageUrl,
     this.isCameraOff = false,
+    this.isUserSpeaking = false,
     this.participantType = ParticipantType.guest,
     this.participantMicStatus = ParticipantMicStatus.none,
     this.participantSelectionType = ParticipantSelectionType.none,
@@ -664,31 +662,52 @@ LinearGradient getBorderColor({
   required ParticipantType participantType,
   required ParticipantMicStatus participantMicStatus,
   required ParticipantSelectionType participantSelectionType,
+  required bool isUserSpeacking,
+  required bool needToShowSelectedBorder,
   // bool isHostItemView = false,
   // bool isCoHostItemView = false,
   // bool isSelectedItemView = false,
   // bool isHandRaisedItemView = false,
 }) {
+  var linearGradient = LinearGradient(
+    colors: [
+      Color(0xFFFFFFFF).withValues(alpha: 0.2),
+      Color(0xFFFFFFFF).withValues(alpha: 0.2),
+    ],
+  );
   if (participantSelectionType == ParticipantSelectionType.selected) {
-    return LinearGradient(colors: [Color(0xFFF22245), Color(0xFFF22245)]);
+    linearGradient = LinearGradient(
+      colors: [Color(0xFFF22245), Color(0xFFF22245)],
+    );
   } else if (participantType == ParticipantType.host) {
-    return LinearGradient(colors: [Color(0xFFFB743A), Color(0xFFF99A28)]);
+    linearGradient = LinearGradient(
+      colors: [Color(0xFFFB743A), Color(0xFFF99A28)],
+    );
   } else if (participantType == ParticipantType.coHost) {
-    return LinearGradient(colors: [Color(0xFF7B9AFF), Color(0xFF7B9AFF)]);
+    linearGradient = LinearGradient(
+      colors: [Color(0xFF7B9AFF), Color(0xFF7B9AFF)],
+    );
   } else if (participantMicStatus == ParticipantMicStatus.rasiedHandView) {
-    return LinearGradient(
+    linearGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [Color(0xFFF7847E), Color(0xFFFAC584), Color(0xFFB0FABC)],
     );
   } else {
-    return LinearGradient(
+    linearGradient = LinearGradient(
       colors: [
         Color(0xFFFFFFFF).withValues(alpha: 0.2),
         Color(0xFFFFFFFF).withValues(alpha: 0.2),
       ],
     );
   }
+  if (needToShowSelectedBorder && isUserSpeacking) {
+    linearGradient = LinearGradient(
+      colors: [Color(0xFF7B9AFF), Color(0xFF7B9AFF)],
+    );
+  }
+
+  return linearGradient;
 }
 
 class ParticipantTile extends StatelessWidget {
@@ -698,8 +717,10 @@ class ParticipantTile extends StatelessWidget {
   final VoidCallback onHandRaseMicIconClicked;
   final VoidCallback onCloseIconClicked;
   final VoidCallback onItemClicked;
+  bool isUserSpeacking = false;
+  bool isRealData = false;
 
-  const ParticipantTile({
+  ParticipantTile({
     Key? key,
     this.isBigView = false,
     required this.isVideoVisible,
@@ -707,6 +728,8 @@ class ParticipantTile extends StatelessWidget {
     required this.onHandRaseMicIconClicked,
     required this.onCloseIconClicked,
     required this.onItemClicked,
+    this.isUserSpeacking = false,
+    this.isRealData = false,
   }) : super(key: key);
 
   @override
@@ -723,10 +746,13 @@ class ParticipantTile extends StatelessWidget {
       participantMicStatus: participant.participantMicStatus,
       participantSelectionType: participant.participantSelectionType,
     );
+    print('isUserSpeacking: $isUserSpeacking isRealData $isRealData');
     LinearGradient borderColor = getBorderColor(
       participantType: participant.participantType,
       participantMicStatus: participant.participantMicStatus,
       participantSelectionType: participant.participantSelectionType,
+      isUserSpeacking: isUserSpeacking,
+      needToShowSelectedBorder: isRealData,
     );
 
     return InkWell(
@@ -981,6 +1007,12 @@ Widget participantVideoOrEmptyViewWidget({
   required ParticipantMicStatus participantMicStatus,
   required ParticipantSelectionType participantSelectionType,
   double? customTxtSize,
+  bool needToShowSelectedBorder = false,
+  LinearGradient? borderGradient,
+  Color? borderColor,
+  double? borderRadius,
+  double? borderWidth,
+  bool isSpeaking = false,
 }) {
   String showName = isSelfView
       ? 'You'
@@ -989,80 +1021,88 @@ Widget participantVideoOrEmptyViewWidget({
       : '';
   print('isVideoVisible: $isVideoVisible');
 
-  return MediaDeviceSelectButton(
-    builder: (context, roomCtx, deviceCtxs) {
-      if (isVideoVisible) {
+  return Container(
+    decoration: BoxDecoration(
+      gradient: borderGradient,
+      color: borderGradient != null ? borderColor : null,
+      borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
+    ),
+    padding: EdgeInsets.all(!isSpeaking ? 0 : (borderWidth ?? 10.r)),
+    child: MediaDeviceSelectButton(
+      builder: (context, roomCtx, deviceCtxs) {
+        if (isVideoVisible) {
+          return GestureDetector(
+            onDoubleTap: () {
+              String selectedDegiceId =
+                  deviceCtxs.selectedVideoInputDeviceId ?? '';
+              List<MediaDevice>? deviceList = deviceCtxs.videoInputs ?? [];
+              if (selectedDegiceId.isEmpty && deviceList.isNotEmpty) {
+                deviceCtxs.selectVideoInput(deviceList.first);
+                print('selected device: ${deviceList.first.deviceId}');
+              } else if (selectedDegiceId.isNotEmpty && deviceList.length > 1) {
+                var oppositeDevice = deviceList.firstWhere(
+                  (element) => element.deviceId != selectedDegiceId,
+                );
+                deviceCtxs.selectVideoInput(oppositeDevice);
+                print('selected device: ${oppositeDevice.deviceId}');
+              } else {
+                print('no device to select');
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/png/dummy_ai_person_img.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        }
+
         return GestureDetector(
           onDoubleTap: () {
-            String selectedDegiceId =
-                deviceCtxs.selectedVideoInputDeviceId ?? '';
-            List<MediaDevice>? deviceList = deviceCtxs.videoInputs ?? [];
-            if (selectedDegiceId.isEmpty && deviceList.isNotEmpty) {
-              deviceCtxs.selectVideoInput(deviceList.first);
-              print('selected device: ${deviceList.first.deviceId}');
-            } else if (selectedDegiceId.isNotEmpty && deviceList.length > 1) {
-              var oppositeDevice = deviceList.firstWhere(
-                (element) => element.deviceId != selectedDegiceId,
-              );
-              deviceCtxs.selectVideoInput(oppositeDevice);
-              print('selected device: ${oppositeDevice.deviceId}');
-            } else {
-              print('no device to select');
+            if (!deviceCtxs.cameraOpened) {
+              deviceCtxs.enableCamera();
             }
           },
           child: Container(
             width: double.infinity,
             height: double.infinity,
             decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/png/dummy_ai_person_img.png'),
-                fit: BoxFit.cover,
-              ),
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(10.r),
             ),
-          ),
-        );
-      }
-
-      return GestureDetector(
-        onDoubleTap: () {
-          if (!deviceCtxs.cameraOpened) {
-            deviceCtxs.enableCamera();
-          }
-        },
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                margin: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.2),
-                  // borderRadius: BorderRadius.circular(100),
-                ),
-                child: Center(
-                  child: Text(
-                    showName,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: (customTxtSize ?? 16).sp,
-                      fontWeight: FontWeight.w600,
+            child: Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  margin: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    // borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Center(
+                    child: Text(
+                      showName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: (customTxtSize ?? 16).sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    },
+        );
+      },
+    ),
   );
 }
 
